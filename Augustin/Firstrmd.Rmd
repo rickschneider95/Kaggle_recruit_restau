@@ -1,0 +1,27 @@
+---
+title: "Untitled"
+author: "Augustin Baudoin"
+date: "11/19/2018"
+output: html_document
+---
+Here we'll load all libraries pre-emptively so that we don't get ugly ass loading packages errwhere
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+sample_submission <- read.csv("sample_submission.csv")
+store_id_submission <- read.csv("store_id_relation.csv")
+hpg_store_info <- read.csv("hpg_store_info.csv")
+hpg_reserve <- read.csv("hpg_reserve.csv")
+date_info <- read.csv("date_info.csv")
+air_visit_data <- read.csv("air_visit_data.csv")
+air_store_info <- read.csv("air_store_info.csv")
+air_reserve <- read.csv("air_reserve.csv")
+
+head(store_id_submission)
+head(hpg_reserve)
+head(date_info)
+head(air_visit_data)
+```
