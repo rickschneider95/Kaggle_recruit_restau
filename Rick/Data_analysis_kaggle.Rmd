@@ -9,22 +9,60 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+The goal of this file is to study:
+1) Study and analyse the air_reserve data set
+2) Study the relation between air and hpg using the store_id_relation data set
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+-----------------------------------------------------------------------------------
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+1) Analysis of "air_reserve"
 
-```{r cars}
-summary(cars)
+```{r}
+#libraries:
+library(dplyr)
+library(ggplot2)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+#Load data
+air <- read.csv("data/air_reserve.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+First, lets get a general idea of the data:
+```{r}
+View(air)
+dim(air)
+names(air)
+glimpse(air)
+sum(is.na(air))
+```
+This file provides information on the reservations that have been made through the air. It has 92.378 rows and 4 columns, i.e. the store id ON THE AIR SYSTEM, the visit time, the reserve time (date and time), and the number of people the reservation has been done for. 
+-Apparently, no missing values (at least not properly encoded ones)
+
+
+```{r}
+#How many different stores:
+air %>% distinct(air_store_id) %>% summarize(n())
+#Number of visits per store:
+store_count <- air %>% 
+                  group_by(air_store_id) %>% 
+                  summarize(count=sum(reserve_visitors))
+summary(store_count$count)
+View(store_count)
+```
+-There are 314 different stores with an average of 1318 visits, and a median of 808 visits. The min being 1 visit (no obvious outlier) and the max being 8355 (very popular restaurant on that platform).
+
+
+```{r}
+#Transformation in date time:
+#visit time:
+air$visit_datetime <- as.POSIXct(air$visit_datetime)
+summary(air$visit_datetime)
+#reserve time:
+air$reserve_datetime <- as.POSIXct(air$reserve_datetime)
+summary(air$reserve_datetime)
+```
+
+The first reservation has been made on the first of january, and the last reservation on the 22 of april.
+The first visit happened the first of january as well, and the last visit on the first of mai.
+This is important to know as we want to predict "the future", so our test/train split has to be done accordingly! (e.g. train:01.01.16 - 01.01.17, test: 02.01.17 - 05.01.17, as we want to predict future months!).
