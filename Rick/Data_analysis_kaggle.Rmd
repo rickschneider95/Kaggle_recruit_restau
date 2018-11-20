@@ -21,6 +21,7 @@ The goal of this file is to study:
 #libraries:
 library(dplyr)
 library(ggplot2)
+library(lubridate)
 ```
 
 ```{r}
@@ -66,3 +67,41 @@ summary(air$reserve_datetime)
 The first reservation has been made on the first of january, and the last reservation on the 22 of april.
 The first visit happened the first of january as well, and the last visit on the first of mai.
 This is important to know as we want to predict "the future", so our test/train split has to be done accordingly! (e.g. train:01.01.16 - 01.01.17, test: 02.01.17 - 05.01.17, as we want to predict future months!).
+
+Start with visit_datetime:
+```{r}
+#generate new columns for year, month, day
+air <- air %>% 
+        mutate(visit_wday = wday(air$visit_datetime,label=TRUE),
+               visit_month = month(air$visit_datetime,label=TRUE),
+               visit_year = year(air$visit_datetime))
+
+#number of visitors per year:
+p1 <- air %>% 
+        group_by(visit_year) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=visit_year,y=sum)) +
+        geom_col()
+        
+p1
+
+#number of visitors per month:
+p2 <- air %>% 
+        group_by(visit_month) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=visit_month,y=sum)) +
+        geom_col()
+        
+p2
+
+#number of visitors per day:
+p3 <- air %>% 
+        group_by(visit_wday) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=visit_wday,y=sum)) +
+        geom_col()
+        
+p3
+
+```
+
