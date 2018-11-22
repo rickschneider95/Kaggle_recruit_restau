@@ -7,22 +7,48 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r}
+library(tidyverse)
+library(lubridate)
+library(timeDate)
+library(readr)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+```{r, warning=FALSE}
+visit_air <- read_csv("data/air_visit_data.csv")
+visit_air %>% glimpse()
+visit_air %>% distinct(air_store_id) %>% nrow()
+c(min(visit_air$visit_date),max(visit_air$visit_date)) 
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+visit_air2 <- read_csv("data/air_reserve.csv")
+visit_air2 %>% glimpse()
+visit_air2 %>% distinct(air_store_id) %>% nrow()
+c(min(visit_air2$visit_datetime),max(visit_air2$visit_datetime)) 
+visit_air2 <-visit_air2 %>% separate(visit_datetime, into = c('visit_date', 'visit_time'), sep = 10) %>% separate(reserve_datetime, into = c('reserve_date', 'reserve_time'), sep = 10)  
+
+
+# From below we can conclude the data separate each reservation ( meaning one row correspond to one reservation per restaurant per day and not all the reservation per restaurant per day)
+visit_air2 %>% filter(air_store_id=='air_877f79706adbfb06') %>% group_by(visit_date) %>% distinct(visit_date) %>% nrow() #get 259
+visit_air2 %>% filter(air_store_id=='air_877f79706adbfb06') %>% group_by(visit_date) %>% nrow() #get 1061 
+
+# From below we can conclude the data doesn't separate each visit ( meaning one row correspond to all visit  per restaurant per day)
+visit_air %>% filter(air_store_id=='air_877f79706adbfb06') %>% group_by(visit_date) %>% distinct(visit_date) %>% nrow() #get 383
+visit_air %>% filter(air_store_id=='air_877f79706adbfb06') %>% group_by(visit_date) %>% nrow() #get383 
+
+
+# random test 
+visit_air2 %>% filter(air_store_id=='air_877f79706adbfb06',visit_date=='2016-01-15') %>%summarise(total= sum(reserve_visitors)) #output 19
+visit_air %>% filter(air_store_id=='air_877f79706adbfb06',visit_date=='2016-01-15') #output 19
+
+visit_air2 %>% filter(air_store_id=='air_db80363d35f10926',visit_date=='2016-01-30') %>% summarise(total= sum(reserve_visitors)) #output 20
+visit_air %>% filter(air_store_id=='air_db80363d35f10926',visit_date=='2016-01-30') #output 48
+
+#how many stores in each data frame ? 
+visit_air2  %>% nrow() #92378
+visit_air2 %>% distinct(air_store_id) %>% nrow() #314
+visit_air %>% distinct(air_store_id) %>% nrow() #829
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
