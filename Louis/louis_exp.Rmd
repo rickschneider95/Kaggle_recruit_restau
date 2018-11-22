@@ -1,0 +1,82 @@
+---
+title: "project"
+author: "Louis Gruand"
+date: "3 novembre 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(timeDate)
+library(readr)
+```
+
+```{r}
+air_store <- read_csv("data/air_store_info.csv")
+head(air_store)
+unique(air_store$air_genre_name)
+names(air_store)
+dim(air_store)
+```
+829 restaurants: info: air_store_id, air_genre_name, air_area_name, lat, long
+
+
+```{r}
+library(leaflet)
+```
+
+```{r}
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=air_store$longitude, lat=air_store$latitude, popup=air_store$air_genre_name,clusterOptions = markerClusterOptions())
+m
+#get different marker for different rest types?
+
+getColor <- function(rest) {
+  sapply(rest$air_genre_name, function(air_genre_name) {
+  if(air_genre_name == "Italian/French") {
+    "green"
+  } else if(air_genre_name == "Other") {
+    "orange"
+  } else if(air_genre_name == "Yakiniku/Korean food"){
+    "blue"
+  } else if(air_genre_name == "Bar/Cocktail"){
+    "white"
+  }
+    })
+}
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = getColor(air_store)
+)
+
+air_store %>% 
+  leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addAwesomeMarkers(lng=air_store$longitude,lat=air_store$latitude,popup=air_store$air_genre_name,clusterOptions=markerClusterOptions(),icon=icons)
+```
+
+```{r}
+names(air_store)
+library(ggplot2)
+#by genre, by area plot
+
+loc <- c()
+for(i in 1:14){
+  loc <- air_store$air_area_name
+  ggplot(air_store%>%dplyr::filter(air_area_name==loc[i]),aes(x=air_genre_name)) +
+  geom_bar()+
+  coord_flip()
+}
+```
+
+
