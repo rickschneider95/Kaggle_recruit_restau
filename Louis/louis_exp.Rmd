@@ -9,12 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r}
 library(tidyverse)
 library(lubridate)
 library(timeDate)
 library(readr)
+library(leaflet)
 ```
 
 ```{r}
@@ -25,11 +25,6 @@ names(air_store)
 dim(air_store)
 ```
 829 restaurants: info: air_store_id, air_genre_name, air_area_name, lat, long
-
-
-```{r}
-library(leaflet)
-```
 
 ```{r}
 m <- leaflet() %>%
@@ -42,15 +37,26 @@ getColor <- function(rest) {
   sapply(rest$air_genre_name, function(air_genre_name) {
   if(air_genre_name == "Italian/French") {
     "green"
-  } else if(air_genre_name == "Other") {
+  } else if(air_genre_name == "Diner bar") {
     "orange"
-  } else if(air_genre_name == "Yakiniku/Korean food"){
+  } else if(air_genre_name == "Izakaya"){
     "blue"
   } else if(air_genre_name == "Bar/Cocktail"){
-    "white"
+    "red"
   }
+    else if(air_genre_name == "Asian"){
+    "darkgreen"
+    }
+    else{
+      "purple"
+    }
     })
 }
+unique(air_store$air_genre_name)
+
+'red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpurple', 'cadetblue'
+
+getColor(air_store)
 
 icons <- awesomeIcons(
   icon = 'ios-close',
