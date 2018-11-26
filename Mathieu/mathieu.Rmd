@@ -52,16 +52,5 @@ visit_air %>% distinct(air_store_id) %>% nrow() #829
 
 ```
 
-```{r}
 
-cor(df$`EXW cost`,df$`Net Weight (kg)`)
-cor(df$`EXW cost`,df$`Yearly Volume`)
-
-ggplot(data = df,
-       aes(x =`EXW cost`, y =`Net Weight (kg))  +geom_point()+labs(title='Unit Price Cost vs Net Weight')
-
-ggplot(data = df,
-       aes(x =`EXW cost`, y =`Yearly Volume` ))  +geom_point()+labs(title='Unit Price Cost vs Yearly Volume')
-
-```
 
