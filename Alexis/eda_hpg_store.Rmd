@@ -1,0 +1,252 @@
+---
+title: "eda_hpg_store_info"
+author: "Alexis Laks"
+date: "20/11/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(naniar)
+library(VIM)
+
+library('geosphere') # geospatial locations
+library('leaflet') # maps
+library('leaflet.extras') # maps
+library('maps') # maps
+```
+
+```{r}
+hpg_store <- read_csv("data/hpg_store_info.csv")
+hpg_store
+levels(as.factor(hpg_store$hpg_genre_name)) 
+```
+
+*hpg_store_id* : Store id
+
+*hpg_genre_name* : Style of the store (ex: café)
+
+*hpg_area_name* : region/department where store is located
+
+*latitude/longitude* : exact position of the store
+
+What can be studied here is whether there is more visits in one specific area than another. Although it could be hard to interpret the data in absolute values since it makes sense there would be more visits in tokyo than any a more "coutnryside" area. 
+
+Before going further, I'll join the visit data from the hpg platform with this data:
+
+```{r}
+hpg_reserve <- read.csv("data/hpg_reserve.csv")
+hpg_reserve %>% 
+  select(hpg_store_id,reserve_visitors) # I'm only intersted in these two, so it will be easier to work with a smaller data set.
+```
+
+```{r}
+hpg_reserve %>% distinct(hpg_store_id) %>% summarise(count = n())
+```
+
+Seems there is missing data on some restaurants. We have 13325 different stores for which we have data on the time of reservation, time of visit and nb of visitors but only 4690 observations of stores regarding their location. We'll join the two datasets and see how we'll proceed with the na's later on. 
+
+summing data over all dates since we're only interested in the total nb of visitors for each restaurant:
+```{r}
+hpg_reserve <- hpg_reserve %>% 
+                group_by(hpg_store_id) %>% 
+                summarise(total = n())
+```
+
+And now joining the two datasets (we're gonna get a lot of NA's ~ 13325 - 4690 = 8635)
+```{r}
+hpg <- left_join(hpg_reserve,hpg_store, by = "hpg_store_id")
+
+summary(aggr(hpg, sortVar=TRUE))$combinations
+```
+
+We see from the aggr function from the VIM package that the only existing combination of missing values is 0:0:1:1:1:1 so when an NA is in one of the variables imported from hpg_store_info it's missing in all the others. We are missing data for approx 8635 (as expected) restaurants from the hpg_reserve dataset.
+
+Here it doesn't make sense to try to predict the location and style of the stores with missing values regardless of the method since it would be based only on the number of visits in each restaurant, so it's almost sure that the prediction program will locate an NA store in Tokyo although in reality it's in Kyoto for example (high visits in each city). As for the store ID they are randomly generated so it makes absolutely no sense to use the identifiers for any sort of prediction.
+
+The only case where prediction of NA's would might be handy would be if we only separated regions into regions with a big city where for example Tokyo, Kyoto, etc. would be in the same category and samller regions with much less influential cities in another. In the end the new data set created would be much less precise, we would only have number of visits, ID and area, but we need to think about what we need in terms of data for our prediction. This data set would contain an indicator variable taking value 1 if store is in a big city region and 0 otherwise. We'll see later on if we can intergrate that to our model, although this remains a detail compared to the bulk of the model. 
+
+So although it's a tragedy, I'll discard the stores for which we have no info on Location etc. for the sake of my EDA on those specific variables. Sorry folks
+
+So, to get rid of these:
+
+```{r}
+hpg <- hpg %>% filter(hpg_genre_name != "NA")
+sum(is.na(hpg)) # Just to check...
+```
+
+Ok so now that we've dealt with the missing values problem (sort of), the first thing I want to check is the distribution of the visits according to the style of the store to see if some are much more popular than others. 
+
+```{r}
+visitors_per_style <- hpg %>%
+  group_by(hpg_genre_name) %>%
+  summarise(total = n()) %>%
+  arrange(total)
+
+levels(as.factor(hpg$hpg_genre_name))
+
+sum(hpg %>% 
+  group_by(hpg_genre_name, hpg_area_name) %>%
+  summarise(total = n()) == 0) 
+
+hpg %>% 
+  group_by(hpg_genre_name, hpg_area_name) %>%
+  summarise(total = n()) %>% 
+  arrange(total) %>% 
+  head()
+```
+
+We have 34 different genres in our data, and we have at least one data point for each of the styles mentionned.let's visualize how popular they are in Japan:
+
+```{r}
+visitors_per_style %>% 
+  ggplot() +
+  aes(x = reorder(hpg_genre_name, total, FUN = min), y = total, fill = hpg_genre_name) +
+  geom_col() +
+  coord_flip() +
+  theme(title=element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none") 
+
+```
+
+Ok so there is a lot more visitors in japanese restaurants than in any other restaurant by far. then we could say that the ohter main restaurants people visit are :
+-Japanese Style
+-International cuisine
+-Creation
+-Seafood
+-Grilled meat
+-Italian
+-Italian/Spanish bar
+
+Also within these categories there are maybe some redundant categories, for example we have sushi restaurants which are considered a different genre than japanese style. It might be usefull (or not) to join genres that seem redundant. 
+
+Although this doesn't mean this is really the overall preference in japan for several obvious reasons, we should check how many of these restaurants are in certain locations (like a bunch of italian restaurants in a very well placed spot in tokyo?)
+
+```{r}
+levels(as.factor(hpg$hpg_area_name)) # There are 119 different area names in Japan considered in our dataset
+
+hpg %>% 
+  arrange(desc(total)) %>% 
+  ggplot() +
+  aes(x = hpg_area_name, y = total, fill = hpg_genre_name) +
+  geom_col() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+We can see that overall there is the same proportion of visits in each store according to their style, so we could say that our sample is indeed representative of the preferences we saw before. We can see also that there are areas with a lot of visits, must be due to the overall population of that area. Let's check.
+
+```{r}
+hpg %>%
+  mutate(hpg_area_name = str_sub(hpg_area_name, 1, 20)) %>% 
+  group_by(hpg_area_name) %>% 
+  summarise(total = n()) %>% 
+  ungroup() %>% 
+  top_n(20,total) %>% 
+  ggplot(aes(reorder(hpg_area_name, total, FUN = min), total, fill = hpg_area_name)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Top 20 areas w/ most restaurants", x = "Areas", y = "Number of restaurants")
+```
+
+Indeed as expected the first area here is Tokyo-Shinjuku which is one of the most frequented areas in Japan. We could expect Kyoto to be there as well, along with several other major cities but maybe they're just not in this dataset! We'll check for that as well later on, first I want to check which major areas we have data on:
+
+```{r}
+levels(as.factor(hpg$hpg_area_name)) # These are all the different areas in our data, although I'll group them according to the major city they are attached to.
+hpg <- hpg %>%
+  mutate(hpg_area_name = case_when(hpg_area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                   TRUE ~ hpg_area_name)) 
+#We needed to make this slight modification sicne one of the osaka areas was wirtten without the same character as the others.
+
+hpg %>% 
+  mutate(hpg_area_name = substr(hpg_area_name, 0, 8)) %>% 
+  group_by(hpg_area_name) %>% 
+  summarise(total = n()) %>% 
+  ggplot(aes(reorder(hpg_area_name, total, FUN = min), total, fill = hpg_area_name)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Most influential areas", x = "Areas", y = "Number of restaurants")
+```
+
+Also expected this, the bulk of the data come from the Tokyo area, then Osaka and other big cities
+
+```{r}
+leaflet(hpg) %>%
+  addTiles() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addMarkers(~longitude, ~latitude,
+             popup = ~hpg_store_id, label = ~hpg_genre_name,
+              clusterOptions = markerClusterOptions())
+```
+
+We have the data mapped here, we see that the latitudes/longitudes are approximative since if we zoom in we can see groupements (sometimes up to 200) of restaurants in one street. So it might be interesting areas in stead of specific latitudes/longitudes for every restaurant. 
+
+One particular aspect of distribution of genres within an area could be interesting for us, what if you're the only italian restaurant in a certain area ? You'd catch all the costumers (although economics show that where demand exceeds supply - implying higher prices - supply will rise i.e other people will open italian restaurants mamène)
+
+```{r}
+hpg %>%
+  mutate(hpg_area_name = str_sub(hpg_area_name, 0, 8)) %>%
+  ggplot(aes(hpg_area_name, hpg_genre_name)) +
+  geom_count(colour = "blue") +
+  theme(legend.position = "bottom", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) + 
+  labs(y = "Genre", x = "Area", title = "Contingency table")
+```
+
+As seen before, the more popular genres are pretty much present in every region so no real new opportunities here it seems. We can try and represent the distance between an artificial "center" of japan and all the areas considered since Japan's population is concentrated around Tokyo and decreases as we move from that center: 
+
+```{r}
+test <- hpg_store
+med_coord_hpg <- hpg %>%
+  summarise_at(vars(longitude:latitude), median) # calculating median distance of all areas. (sort of center of japan)
+
+hpg_coords <- hpg %>%
+  select(longitude, latitude) # just selecting coordinates
+
+test$dist <- distCosine(hpg_coords, med_coord_hpg)/1e3 # creating a new column with distance btw each area and "center" of japan
+
+test_count <- hpg_store %>%
+  group_by(hpg_area_name) %>%
+  summarise(hpg_count = n())
+
+test <- test %>%
+  mutate(dist_group = as.integer(case_when(dist < 80 ~ 1, dist < 300 ~ 2, dist < 500 ~ 3, dist < 750 ~ 4, TRUE ~ 5))) %>%
+  left_join(test_count, by = "hpg_area_name") %>%
+  separate(hpg_area_name, c("prefecture"), sep = " ", remove = FALSE) # Seperating areas in function of their distance to "center"
+
+test %>%
+  ggplot(aes(dist)) +
+  geom_histogram(bins = 30, fill = "red") +
+  geom_vline(xintercept = c(80, 300, 500, 750)) +
+  labs(x = "Linear distance [km]")
+```
+
+Indeed we do see a decrease in frequency of visits between our center (which is around tokyo) and the other areas. Maybe we can use this relation later on instead of looking at direct location we can just use the category within which a specific store falls.
+
+```{r}
+bar <- test %>% 
+  select(latitude, longitude, dist_group) %>%
+  mutate(dset = "hpg")
+
+leaflet(bar) %>%
+  addTiles() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addScaleBar() %>%
+  addCircleMarkers(lng = bar$longitude, lat = bar$latitude, group = "HPG",
+                   color = "red", fillOpacity = 0.5, radius = 3*bar$dist_group) %>%
+  addCircleMarkers(lng = med_coord_hpg$longitude, lat = med_coord_hpg$latitude, group = "Centre",
+                   color = "darkgreen", fillOpacity = 1) %>%
+  addLayersControl(
+    overlayGroups = c("HPG", "Centre"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+
+

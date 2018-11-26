@@ -22,12 +22,17 @@ The goal of this file is to study:
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(gridExtra)
 ```
 
 ```{r}
 #Load data
 air <- read.csv("data/air_reserve.csv")
+#air_visit <- read.csv("data/air_visit_data.csv")
+#View(air_visit)
 ```
+
+
 
 First, lets get a general idea of the data:
 ```{r}
@@ -38,7 +43,7 @@ glimpse(air)
 sum(is.na(air))
 ```
 This file provides information on the reservations that have been made through the air. It has 92.378 rows and 4 columns, i.e. the store id ON THE AIR SYSTEM, the visit time, the reserve time (date and time), and the number of people the reservation has been done for. 
--Apparently, no missing values (at least not properly encoded ones)
+
 
 
 ```{r}
@@ -49,7 +54,6 @@ store_count <- air %>%
                   group_by(air_store_id) %>% 
                   summarize(count=sum(reserve_visitors))
 summary(store_count$count)
-View(store_count)
 ```
 -There are 314 different stores with an average of 1318 visits, and a median of 808 visits. The min being 1 visit (no obvious outlier) and the max being 8355 (very popular restaurant on that platform).
 
@@ -74,34 +78,218 @@ Start with visit_datetime:
 air <- air %>% 
         mutate(visit_wday = wday(air$visit_datetime,label=TRUE),
                visit_month = month(air$visit_datetime,label=TRUE),
-               visit_year = year(air$visit_datetime))
+               visit_year = year(air$visit_datetime),
+               visit_date = date(air$visit_datetime),
+               visit_hour = hour(air$visit_datetime))
+
+air %>% filter(visit_month == "Aug") %>% summarize(sum=sum(reserve_visitors))
 
 #number of visitors per year:
 p1 <- air %>% 
         group_by(visit_year) %>% 
-        summarise(sum =sum(reserve_visitors)) %>% 
-        ggplot(aes(x=visit_year,y=sum)) +
-        geom_col()
+        summarise(count =n()) %>% 
+        ggplot(aes(x=visit_year,y=count)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Year",y="number of visitors")
         
-p1
 
 #number of visitors per month:
 p2 <- air %>% 
         group_by(visit_month) %>% 
-        summarise(sum =sum(reserve_visitors)) %>% 
-        ggplot(aes(x=visit_month,y=sum)) +
-        geom_col()
+        summarise(count = n()) %>% 
+        ggplot(aes(x=visit_month,y=count)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Month",y="number of visitors")
         
-p2
 
 #number of visitors per day:
 p3 <- air %>% 
         group_by(visit_wday) %>% 
-        summarise(sum =sum(reserve_visitors)) %>% 
-        ggplot(aes(x=visit_wday,y=sum)) +
-        geom_col()
-        
-p3
+        summarise(count =n()) %>% 
+        ggplot(aes(x=visit_wday,y=count)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Weekdays",y="number of visitors")
+  
+#time evaluation of the number of visitors:
+p4 <- air %>% 
+        group_by(visit_date) %>% 
+        summarise(count = n()) %>% 
+        ggplot(aes(x=visit_date,y=count)) +
+        geom_line(col="skyblue") +
+        theme_classic() +
+        labs(x="Date",y="number of visitors")
+
+
+#Put the plots together:
+grid.arrange(p1, p2, p3, p4, ncol=2)
 
 ```
+For the 2 years, we have more or less the same number of people visiting restaurants per year. We actually have data on 12 months (actually 10; no data on august and september) of 2016, but only on 5 months on 2016, this means that the average number of visits per month must have increaed from 2016 to 2017.This is either due to more people visitng those restaurants, or, what is more likely, more people using the platform Air.
+More people are visiting the restaurants on fridays and saturdays than on the other days.
+Looking at the number of visitors vs month plot, we can see that we don't have any data on the month of august and september 2016.
+The last graph confirms that we have no data on the months of august and september. Maybe the data set is incomplete, or maybe the platform was down (we see a decreasing trend already the months before). There is another possibility: the data set air_visit_data ontains similar information. We need to check if these data sets need to be merged together.
+As expected, most people dine around 19:00.
+
+
+```{r}
+#generate new columns for reservation:
+air <- air %>% 
+        mutate(reserve_wday = wday(air$visit_datetime,label=TRUE),
+               reserve_month = month(air$visit_datetime,label=TRUE),
+               reserve_year = year(air$visit_datetime),
+               reserve_date = date(air$visit_datetime))
+
+#number of visitors per year:
+p1 <- air %>% 
+        group_by(reserve_year) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=reserve_year,y=sum)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Year of reservation",y="number of visitors")
+        
+
+#number of visitors per month:
+p2 <- air %>% 
+        group_by(reserve_month) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=reserve_month,y=sum)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Month of reservation",y="number of visitors")
+        
+
+#number of visitors per day:
+p3 <- air %>% 
+        group_by(reserve_wday) %>% 
+        summarise(sum =sum(reserve_visitors)) %>% 
+        ggplot(aes(x=reserve_wday,y=sum)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Weekdays of reservation",y="number of visitors")
+  
+#time evaluation of the number of visitors:
+p4 <- air %>% 
+        group_by(reserve_date ) %>% 
+        summarise(sum = sum(reserve_visitors)) %>% 
+        ggplot(aes(x=reserve_date ,y=sum)) +
+        geom_line(col="skyblue") +
+        theme_classic() +
+        labs(x="Date of reservation",y="number of visitors")
+
+
+#Put the plots together:
+grid.arrange(p1, p2, p3, p4, ncol=2)
+
+```
+The plots look extremely similar to what we saw for the actual visits (only minor differences). As a result, we conclude that there is not a lot of time laps between the reservation and the actual visit. We need to verify this.
+
+For the reservation times, we might be interested in the time lapse between reservation and actual visit.
+
+```{r}
+#calculate lapse of time:
+air <- air %>% 
+        mutate(lapse = visit_date-reserve_date)
+
+
+air %>%  distinct(lapse)
+#count plot lapse:
+#number of visitors per year:
+p1 <- air %>% 
+        group_by(lapse) %>% 
+        summarise(count =n()) %>% 
+        ggplot(aes(x=lapse,y=count)) +
+        geom_col(fill = "skyblue") +
+        theme_classic() +
+        labs(x="Year",y="number of visitors")
+        
+p1
+```
+
+
+---------------------------------------------------------------------------------------
+2) Study the relation between air and hpg using the store_id_relation data set
+
+```{r}
+#import air_visit and store_id_relation and hpg_reseve:
+air_visit <- read.csv("data/air_visit_data.csv")
+relation <- read.csv("data/store_id_relation.csv")
+hpg <- read.csv("data/hpg_reserve.csv")
+```
+
+
+```{r}
+View(air_visit)
+View(relation)
+View(hpg)
+```
+
+
+Our goal is to join the data of hpg_reserve and air_reserve. Lets check if they have the same dimensions or if we will see some NA's.
+
+```{r}
+air %>% distinct(air_store_id) %>% summarize(n())            #314
+hpg %>% distinct(hpg_store_id) %>% summarize(n())            #13325
+air_visit %>% distinct(air_store_id) %>% summarize(n())      #829
+
+dim(relation)
+```
+
+We clearly have imbalanced data sets here. While we have data on 13325 different stores for the hpg system, we only have similar information on 314 (+eventually 829 in air_visit) stores in air.
+The dataframe relation has 150 rows. This will probably mean that 150 of the 314 restaurants in air are also in hpg. Therefore,join does not seem to be the right operator. We might rather concatenate both data sets one above the other, and change the 150 ids to the same one than in  hpg.
+
+
+
+```{r}
+#transfrom Id in air before concatenating:
+air_c <- air <- read.csv("data/air_reserve.csv")
+air_c <- full_join(air, relation, by= "air_store_id")
+
+ind <- !is.na(air_c[,"hpg_store_id"])
+air_c[ind,"air_store_id"] <- as.character(air_c[ind,"hpg_store_id"])
+
+#drop hp_store_id:
+air_c <- air_c[,-5]
+
+#rename store-id
+air_c <- air_c %>% rename(id = air_store_id)
+hpg <- hpg %>% rename(id = hpg_store_id)
+
+
+#concatenate:
+global <- rbind(air_c, hpg)
+global %>% distinct(store_id) %>% summarize(n())    #13508
+dim(global)
+
+
+#check rows of output to comapre if complete:
+submission <- read.csv("data/sample_submission.csv")
+glimpse(submission)
+dim(submission)
+submission %>% distinct(id) %>% summarize(n())
+```
+
+This means that the other data set must contain data on new stores!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
