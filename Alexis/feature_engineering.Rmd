@@ -1,0 +1,20 @@
+---
+title: "feature_engineering"
+author: "Alexis Laks"
+date: "26/11/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+submission_file <- read_csv("data/sample_submission.csv")
+submission_file %>% 
+  mutate(date = substr(id, start = 22, stop = 31)) %>% 
+  mutate(id = substr(id, start = 0, stop = 20)) %>% 
+  group_by(id) %>% 
+  summarise(total =  n())
+```
+

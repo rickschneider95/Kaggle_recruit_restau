@@ -122,7 +122,6 @@ Ok so the most common amount of visitors in a random restaurant per day is 20, b
 visit_air %>%
   mutate(wday = wday(visit_date, label = TRUE)) %>%
   group_by(wday) %>%
-  summarise(visits = mean(visitors)) %>%
   ggplot(aes(wday, visits, fill = wday)) +
   geom_col() +
   theme(legend.position = "none", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
