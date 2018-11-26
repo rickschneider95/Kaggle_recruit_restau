@@ -1,0 +1,7 @@
+---
+title: "Algorithm"
+author: "Rick SCHNEIDER"
+date: "November 26, 2018"
+output: html_document
+---
+
