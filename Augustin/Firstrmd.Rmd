@@ -7,6 +7,9 @@ output: html_document
 Here we'll load all libraries pre-emptively so that we don't get ugly ass loading packages errwhere
 ```{r}
 library(dplyr)
+library(FactoMineR)
+library(lubridate)
+library(ggplot2)
 ```
 
 
@@ -19,9 +22,62 @@ date_info <- read.csv("date_info.csv")
 air_visit_data <- read.csv("air_visit_data.csv")
 air_store_info <- read.csv("air_store_info.csv")
 air_reserve <- read.csv("air_reserve.csv")
+#I want hpg_reserve and date_info
+View(hpg_reserve)
+hpg_reserve2 <- hpg_reserve %>% mutate(visit_date = date(visit_datetime))%>% mutate(reserve_date = date(reserve_datetime))
+date_info <- date_info %>% mutate(calendar_date = date(calendar_date))
+hpg_reserve3 <- full_join(hpg_reserve2,date_info, by = c("visit_date"="calendar_date"))
+#Note: they are all at exact hours so I'm just gonna extract the hour, don't need them minutes and seconds
+hpg_reserve3 <- hpg_reserve3 %>% mutate(visit_time = hour(visit_datetime), reserve_time = hour(reserve_datetime))
+hpg_reserve4 <- hpg_reserve3 %>% dplyr::select(-visit_datetime)
+hpg_reserve4 <- hpg_reserve4 %>% dplyr::select(-reserve_datetime)
 
-head(store_id_submission)
-head(hpg_reserve)
-head(date_info)
-head(air_visit_data)
+names(hpg_reserve4)
+#Below I just reorder the columns so as to make it more clear
+hpg_reserve5 <- hpg_reserve4[c("hpg_store_id","reserve_date","reserve_time","visit_date","day_of_week","holiday_flg","visit_time","reserve_visitors")]
+
+hpg_reserve_backup <- hpg_reserve5
+hpg_reserve5 <- hpg_reserve5 %>% group_by(visit_date,hpg_store_id) %>% mutate(total_reserve_day = sum(reserve_visitors)) #total number of visitors reserved for in a certain day
+
+temp <- interval(hpg_reserve$reserve_datetime, hpg_reserve$visit_datetime)
+length_btwn <- int_length(temp)
+#This is the time that the reservation is taken in advance
+length_btwn <- length_btwn/3600  
+#this way it gives us the time in hours cuz fuck this seconds bs amirite
+
+#now we add it to out hpg_reserve5
+
+hpg_reserve5$length_btwn <- length_btwn
+
+
+hpg_reserve5 %>% group_by(day_of_week) %>% summarize(total = sum(total_reserve_day)) %>% 
+  ggplot(aes(x = day_of_week, y = total)) + geom_col()
+#We notice this plot shows most reservations are made for friday, saturday which makes sense, there is little interest in noting which days the reservations are actually made
+#months <- c("January","February", "March", "April","May","June","July","August","September","October","November","December")
+hpg_reserve5 %>% group_by(length_btwn) %>% summarize(avg = mean(reserve_visitors)) %>% 
+  ggplot(aes(x=length_btwn, y = avg)) + geom_point() 
+#This plot shows in general that as one would expect we have that for longer gaps between reservation taking and reservation date for bigger reservations, and also that people very rarely reserve more than 2500h ~ 100 days in advance. 
+month.abb[hpg_reserve5$month_visit]
+hpg_reserve5$month_visit <- month(hpg_reserve$visit_datetime)
+
+hpg_reserve5 %>% mutate(month_visit = month.abb[month_visit])%>% group_by(month_visit) %>% summarize(total = sum(total_reserve_day)) %>% 
+  ggplot(aes(x = month_visit, y = total)) + geom_col()
+
+hpg_reserve5 %>% group_by(holiday_flg) %>% summarize(avg = mean(total_reserve_day)) %>% 
+  ggplot(aes(x=holiday_flg, y = avg)) + geom_col()
+#lmao lowkey str8 trash, but slightly more ppl on holidays on avg, makes sense
+
+#My computer is getting fucked up cuz the dataset be too big, imma slice a random 100k big sample to make computation easier. I'll sometimes use it sometimes not.
+hpg_small <- hpg_reserve5[round(runif(100000,0,1)*2000000),]
+
+#hpg_trunk <- hpg_reserve5 %>% slice(1:100000)
+View(hpg_reserve5)
+
+hpg_reserve5 %>% group_by(visit_time) %>% summarize(sum = sum(reserve_visitors)) %>% ggplot(aes(x=visit_time, y= sum)) + geom_col() + ylab("total number of visitors at this hour ( who reserved)")
+#note the time is given in a 24h format
+#This graph tots makes sense and is what one would expect
+
+hpg_reserve5 %>% group_by(day_of_week) %>% summarize(avg = mean(visit_time[visit_time>17])) 
+#I'm not gonna plot this there's no significant difference in average dinner time on different days, it's always ~ 18.8
+
 ```
