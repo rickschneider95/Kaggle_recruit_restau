@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(plyr)
+library(lubridate)
+library(dplyr)
 ```
 
 ```{r}
@@ -20,6 +22,19 @@ names(store_id_relation)
 
 #air:
 air_store <- join(air_reserve,air_store_info,by="air_store_id")
+air_store <- air_store %>% 
+  mutate(visit_date=date(visit_datetime),
+         visit_time=format(visit_datetime, format="%H:%M:%S"),
+         reserve_date=date(reserve_datetime),
+         reserve_time=format(reserve_datetime, format="%H:%M:%S")) %>%
+  select(-visit_datetime,-reserve_datetime)
 head(air_store)
+
+  head(date_info)
+# as.data.frame(x=air_store$visit_datetime, y=format(air_store$visit_datetime, format="%H:%M:%S"))
+# format(air_store$visit_datetime, format="%H:%M:%S")
+
+air_store <- left_join(air_store,date_info,by=c("visit_date"="calendar_date"))
+unique(air_store$holiday_flg)
 ```
 
