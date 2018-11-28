@@ -23,7 +23,6 @@ air_visit_data <- read.csv("air_visit_data.csv")
 air_store_info <- read.csv("air_store_info.csv")
 air_reserve <- read.csv("air_reserve.csv")
 #I want hpg_reserve and date_info
-View(hpg_reserve)
 hpg_reserve2 <- hpg_reserve %>% mutate(visit_date = date(visit_datetime))%>% mutate(reserve_date = date(reserve_datetime))
 date_info <- date_info %>% mutate(calendar_date = date(calendar_date))
 hpg_reserve3 <- full_join(hpg_reserve2,date_info, by = c("visit_date"="calendar_date"))
@@ -72,6 +71,7 @@ hpg_small <- hpg_reserve5[round(runif(100000,0,1)*2000000),]
 
 #hpg_trunk <- hpg_reserve5 %>% slice(1:100000)
 View(hpg_reserve5)
+unique(hpg_reserve5$hpg_store_id)
 
 hpg_reserve5 %>% group_by(visit_time) %>% summarize(sum = sum(reserve_visitors)) %>% ggplot(aes(x=visit_time, y= sum)) + geom_col() + ylab("total number of visitors at this hour ( who reserved)")
 #note the time is given in a 24h format
