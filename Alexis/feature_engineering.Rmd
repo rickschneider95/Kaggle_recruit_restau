@@ -19,6 +19,12 @@ nrow(submission_file %>%
   mutate(id = substr(id, start = 0, stop = 20)) %>% 
   group_by(id) %>% 
   summarise(total =  n()))
+
+
+try <- submission_file %>% 
+  mutate(id = substr(id, start = 0, stop = 3)) 
+
+levels(as.factor(try$id)) # only air id's in tghe submission file.
 ```
 
 821 Restaurants are in the submission sample. 
@@ -107,5 +113,61 @@ id_relation <- read.csv("data/store_id_relation.csv")
 id_relation
 ```
 
+```{r}
+air_try <- left_join(air_visit_data,air_store_info, by="air_store_id")
+sum(is.na(air_try))
 
+air_store <- full_join(air_reserve,air_store_info,by="air_store_id")
+
+
+nrow(air_reserve %>% group_by(air_store_id) %>% summarise(total = n()))
+nrow(air_visit_data %>% group_by(air_store_id) %>% summarise(total = n()))
+
+rm(air_try2)
+
+air_try2 <- full_join(air_visit_data,air_reserve, by="air_store_id") # I'm merging w
+
+nrow(air_try2 %>% group_by(air_store_id) %>% summarise(total = n()))
+
+air_try2 %>% filter(is.na(visit_datetime)) %>% group_by(air_store_id) %>% summarise(total = n())
+
+# Same id's in air_visit_data and air_store_info
+
+
+sum(is.na(air_store))
+air_store <- air_store %>% 
+  mutate(visit_date=date(visit_datetime),
+         visit_time=format(visit_datetime, format="%H:%M:%S"),
+         reserve_date=date(reserve_datetime),
+         reserve_time=format(reserve_datetime, format="%H:%M:%S")) %>%
+  select(-visit_datetime,-reserve_datetime)
+head(air_store)
+
+  head(date_info)
+# as.data.frame(x=air_store$visit_datetime, y=format(air_store$visit_datetime, format="%H:%M:%S"))
+# format(air_store$visit_datetime, format="%H:%M:%S")
+
+air_store <- left_join(air_store,date_info,by=c("visit_date"="calendar_date"))
+unique(air_store$holiday_flg)
+```
+
+```{r}
+try <- air_reserve %>%
+  mutate(reserve_date = date(reserve_datetime),
+         reserve_hour = hour(reserve_datetime),
+         reserve_wday = wday(reserve_datetime, label = TRUE),
+         visit_date = date(visit_datetime),
+         visit_hour = hour(visit_datetime),
+         visit_wday = wday(visit_datetime, label = TRUE),
+         diff_hour = time_length(visit_datetime - reserve_datetime, unit = "hour"),
+         diff_day = (visit_date - reserve_date)
+         ) %>% 
+  select(air_store_id,reserve_visitors,reserve_date,diff_day) %>% 
+  rename(visit_date = reserve_date)
+
+air_visit_data <- air_visit_data %>%
+  mutate(visit_date = date(visit_date))
+
+merge_try <- left_join(air_visit_data,try,by = c("air_store_id","visit_date"))
+```
 
