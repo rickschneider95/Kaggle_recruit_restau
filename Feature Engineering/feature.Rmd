@@ -7,9 +7,19 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(plyr)
 ```
 
 ```{r}
+names(air_reserve)
+names(air_store_info)
+names(date_info)
+names(hpg_reserve)
+names(hpg_store_info)
+names(store_id_relation)
 
+#air:
+air_store <- join(air_reserve,air_store_info,by="air_store_id")
+head(air_store)
 ```
 
