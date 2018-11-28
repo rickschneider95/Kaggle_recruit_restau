@@ -23,7 +23,7 @@ nrow(submission_file %>%
 
 821 Restaurants are in the submission sample. 
 
-Importing all datasets:
+## Importing all datasets:
 
 ```{r}
 # Air
@@ -77,7 +77,7 @@ There is no sense in imputing the missing data even with robust methods since it
 It is litteraly impossible to fetch exogenous data since we would need the new data fetched to correspond exactly to the id's we have, be as big (or we just get the same problem as hpg_store) 
 
 
-SOLUTION 1 (NA sol°) :
+**SOLUTION 1 (NA sol°) :**
 ```{r}
 hpg1 <- left_join(hpg_reserve, hpg_store, by = "hpg_store_id")
 sum(is.na(hpg1))/4 # since we have 4 variables in addition to id in store
@@ -85,7 +85,7 @@ sum(is.na(hpg1))/4 # since we have 4 variables in addition to id in store
 
  this is actually interesting, we only have half (approx) of the observations that have NA's now, which means that store for which we have info (loc°, genre etc.) are observed more in reserve than for those that we don't have in store. This actually leads me to thinking sol° 2 is maybe the best one.
 
-SOLUTION 2 (Omitting NA sol°):
+**SOLUTION 2 (Omitting NA sol°):**
 ```{r}
 hpg2 <- hpg1 %>% filter(hpg_genre_name != "NA") 
 sum(is.na(hpg2)) # 0 -> perfect
@@ -93,9 +93,19 @@ sum(is.na(hpg2)) # 0 -> perfect
 
 Since if NA's are present in one of the varaibles, they are present for all others, we just filter from one var and this will get rid of all the observations with NA's.
 
-SOLUTION 3 (no store info):
+**SOLUTION 3 (no store info):**
 ```{r}
 hpg3 <- hpg_store_info
 ```
 
 Not a good idea in my opinion.
+
+## Merging with air platform data. 
+
+```{r}
+id_relation <- read.csv("data/store_id_relation.csv")
+id_relation
+```
+
+
+
