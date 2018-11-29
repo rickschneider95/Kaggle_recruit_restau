@@ -12,7 +12,6 @@ library(dplyr)
 library(onehot)
 library(data.table)
 library(mltools)
-install.packages("mltools")
 library(dplyr)
 library(stringr)
 library(lubridate)
@@ -29,7 +28,7 @@ dataset <- read.csv("data/complete_data.csv")
 
 
 ```{r}
-data <- dataset %>% filter(str_detect(id, "^air"))
+data_air <- dataset %>% filter(str_detect(id, "^air"))
 ```
 
 ```{r}
@@ -40,39 +39,96 @@ data_hpg <- data %>% filter(str_detect(id, "^hpg"))
 # One hot encoding for VISIT time:
 
 ```{r}
-time_transf <- function(data,column){
+vtime_transf <- function(data,column){
   one_h <- data
   one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
   one_h <- one_h %>% select(visit_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
-
-some_date <- c("01/02/1979", "03/04/1980")
-day(dmy(some_date))
-
-
-data <- data %>%
-  mutate(day_visit = day(dmy(visit_date)),
-         day_reserve = day(dmy(reserve_date)),
-         month_visit = month(dmy(visit_date)),
-         month_reserve = month(dmy(reserve_date)),
-         year_visit = year(dmy(visit_date)),
-         year_reserve = year(dmy(visit_date)))
 ```
 
 # One hot encoding for RESERVE time:
 
 ```{r}
-time_transf <- function(data,column){
+rtime_transf <- function(data,column){
   one_h <- data
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
-  one_h <- one_h %>% select(visit_time)
+  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3))
+  one_h <- one_h %>% select(reserve_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
 ```
 
+# One hot encoding for reserve MONTH:
+
+```{r}
+rmonth_transf <- function(data,column){
+  one_h <- data
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7))
+  one_h <- one_h %>% select(reserve_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for visit MONTH:
+
+```{r}
+vmonth_transf <- function(data,column){
+  one_h <- data
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7))
+  one_h <- one_h %>% select(visit_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for reserve YEAR:
+
+```{r}
+ryear_transf <- function(data,column){
+  one_h <- data
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
+  one_h <- one_h %>% select(reserve_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for visit YEAR:
+
+```{r}
+vyear_transf <- function(data,column){
+  one_h <- data
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
+  one_h <- one_h %>% select(visit_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+
+```{r}
+data_air
+```
+
+replace reservation times by average diff in res/visit for each ID !!!
+group_by id,date and summarise -> get the total number of visits per day. (per noon,night?) => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately 
+
+# TRY CHUNK ( TRY MY CHUNK (:^<) )
+
+```{r}
+try <- data_air
+try <- rtime_transf(try,reserve_time)
+try <- vtime_transf(try,visit_time)
+try <- rmonth_transf(try,visit_time)
+try <- vmonth_transf(try,visit_time)
+try <- ryear_transf(try,visit_time)
+try <- vyear_transf(try,visit_time)
+
+try
+```
 
 
 We have NA's for day of the week reserve and day of the week visit
