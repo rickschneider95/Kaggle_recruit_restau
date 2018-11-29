@@ -58,8 +58,6 @@ vtime_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
-<<<<<<< HEAD
-=======
 ```
 
 # One hot encoding for RESERVE time:
@@ -85,7 +83,6 @@ rmonth_transf <- function(data){
   data <- data %>% cbind(one_h)
 }
 
->>>>>>> 4f88adbde709edec4bca5e88bde779f78f34544a
 ```
 
 # LOOOUUUUUIIIISSSSS 
@@ -111,7 +108,7 @@ vmonth_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
-#day of week visit et reserve: onehotencoding
+
 ```
 
 # One hot encoding for reserve YEAR:
@@ -156,10 +153,28 @@ area_transf <- function(data){
 }
 ```
 
-
-
+# One hot encoding for day of week visit
 ```{r}
-data_air
+#day of week visit et reserve: onehotencoding
+names(data)
+vdayweek_transf <- function(data){
+  one_h <- data
+  one_h$day_of_the_week_visit <- as.factor(one_h$day_of_the_week_visit)
+  one_h <- one_h %>% select(day_of_the_week_visit)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for day of week reserve
+```{r}
+rdayweek_transf <- function(data){
+  one_h <- data
+  one_h$day_of_the_week_reserve <- as.factor(one_h$day_of_the_week_visit)
+  one_h <- one_h %>% select(day_of_the_week_visit)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
 ```
 
 replace reservation times by average diff in res/visit for each ID !!!
