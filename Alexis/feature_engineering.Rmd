@@ -7,14 +7,172 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(purrr)
+library(tidyverse)
+library(lubridate)
 ```
 
 ```{r}
 submission_file <- read_csv("data/sample_submission.csv")
-submission_file %>% 
+nrow(submission_file %>% 
   mutate(date = substr(id, start = 22, stop = 31)) %>% 
   mutate(id = substr(id, start = 0, stop = 20)) %>% 
   group_by(id) %>% 
-  summarise(total =  n())
+  summarise(total =  n()))
+
+
+try <- submission_file %>% 
+  mutate(id = substr(id, start = 0, stop = 3)) 
+
+levels(as.factor(try$id)) # only air id's in tghe submission file.
+```
+
+821 Restaurants are in the submission sample. 
+
+## Importing all datasets:
+
+```{r}
+# Air
+
+air_visit_data <- read.csv("data/air_visit_data.csv")
+air_store_info <- read.csv("data/air_store_info.csv")
+air_reserve <- read.csv("data/air_reserve.csv")
+
+# Hpg 
+
+hpg_store <- read.csv("data/hpg_store_info.csv")
+hpg_reserve <- read.csv("data/hpg_reserve.csv")
+
+# Date
+date_info <- read.csv("data/date_info.csv")
+```
+
+Joining Date_info (holidays) and reservation info/ Creating seperate date variable(no time involved)
+
+```{r}
+hpg_reserve2 <- hpg_reserve %>%
+  mutate(visit_date = date(visit_datetime)) %>%
+  mutate(reserve_date = date(reserve_datetime)) 
+
+hpg_reserve$visit_datetime
+date_info <- date_info %>%
+  mutate(calendar_date = date(calendar_date))
+
+date_info # Data on holidays goes from 1/1/2016 to 31/5/2017
+
+hpg_reserve3 <- full_join(hpg_reserve2,date_info, by = c("visit_date"="calendar_date"))
+
+hpg_reserve3 %>% group_by(hpg_store_id) %>% summarise(total = sum(holiday_flg)) # just a verification, seems good. 
+```
+
+```{r}
+hpg_store
+
+hpg_reserve %>% distinct(hpg_store_id) %>% summarise(count = n()) # There are 13325 different restaurants in the hpg reserve data set, and we only have 4690 restaurants in hpg_store
+```
+
+Here there are three possibilities for HPG. 
+
+- 1: We join the two datasets store & reserve, and keep all the observation despite having NA's for approximately 8000 stores on 13690.
+
+- 2: We join the two datasets, but we discard the observations for which we do not have any info regarding the location etc.. (leaving out 8000 obs.)
+
+- 3: We don't use the store data set for hpg. 
+
+There is no sense in imputing the missing data even with robust methods since it will solely be based on the number of visits (you're tying to predict their location and genre from how many people came to visit in december - makes no sense)
+It is litteraly impossible to fetch exogenous data since we would need the new data fetched to correspond exactly to the id's we have, be as big (or we just get the same problem as hpg_store) 
+
+
+**SOLUTION 1 (NA sol°) :**
+```{r}
+hpg1 <- left_join(hpg_reserve, hpg_store, by = "hpg_store_id")
+sum(is.na(hpg1))/4 # since we have 4 variables in addition to id in store
+```
+
+ this is actually interesting, we only have half (approx) of the observations that have NA's now, which means that store for which we have info (loc°, genre etc.) are observed more in reserve than for those that we don't have in store. This actually leads me to thinking sol° 2 is maybe the best one.
+
+**SOLUTION 2 (Omitting NA sol°):**
+```{r}
+hpg2 <- hpg1 %>% filter(hpg_genre_name != "NA") 
+sum(is.na(hpg2)) # 0 -> perfect
+``` 
+
+Since if NA's are present in one of the varaibles, they are present for all others, we just filter from one var and this will get rid of all the observations with NA's.
+
+**SOLUTION 3 (no store info):**
+```{r}
+hpg3 <- hpg_store_info
+```
+
+Not a good idea in my opinion.
+
+## Merging with air platform data. 
+
+```{r}
+id_relation <- read.csv("data/store_id_relation.csv")
+id_relation
+```
+
+```{r}
+air_try <- left_join(air_visit_data,air_store_info, by="air_store_id")
+sum(is.na(air_try))
+
+air_store <- full_join(air_reserve,air_store_info,by="air_store_id")
+
+
+nrow(air_reserve %>% group_by(air_store_id) %>% summarise(total = n()))
+nrow(air_visit_data %>% group_by(air_store_id) %>% summarise(total = n()))
+
+rm(air_try2)
+
+air_try2 <- full_join(air_visit_data,air_reserve, by="air_store_id") # I'm merging w
+
+nrow(air_try2 %>% group_by(air_store_id) %>% summarise(total = n()))
+
+air_try2 %>% filter(is.na(visit_datetime)) %>% group_by(air_store_id) %>% summarise(total = n())
+
+# Same id's in air_visit_data and air_store_info
+
+
+sum(is.na(air_store))
+air_store <- air_store %>% 
+  mutate(visit_date=date(visit_datetime),
+         visit_time=format(visit_datetime, format="%H:%M:%S"),
+         reserve_date=date(reserve_datetime),
+         reserve_time=format(reserve_datetime, format="%H:%M:%S")) %>%
+  select(-visit_datetime,-reserve_datetime)
+head(air_store)
+
+  head(date_info)
+# as.data.frame(x=air_store$visit_datetime, y=format(air_store$visit_datetime, format="%H:%M:%S"))
+# format(air_store$visit_datetime, format="%H:%M:%S")
+
+air_store <- left_join(air_store,date_info,by=c("visit_date"="calendar_date"))
+unique(air_store$holiday_flg)
+```
+
+
+# Merge try:
+```{r}
+try <- air_reserve %>%
+  mutate(reserve_date = date(reserve_datetime),
+         reserve_hour = hour(reserve_datetime),
+         reserve_wday = wday(reserve_datetime, label = TRUE),
+         visit_date = date(visit_datetime),
+         visit_hour = hour(visit_datetime),
+         visit_wday = wday(visit_datetime, label = TRUE),
+         diff_hour = time_length(visit_datetime - reserve_datetime, unit = "hour"),
+         diff_day = (visit_date - reserve_date)
+         ) %>% 
+  select(air_store_id,reserve_visitors,reserve_date,diff_day) %>% 
+  rename(visit_date = reserve_date)
+
+air_visit_data <- air_visit_data %>%
+  mutate(visit_date = date(visit_date))
+
+merge_try <- full_join(air_visit_data,try,by = c("air_store_id","visit_date"))
+
+levels(as.factor(try$reserve_visitors))
+levels(as.factor(merge_try$reserve_visitors))
 ```
 
