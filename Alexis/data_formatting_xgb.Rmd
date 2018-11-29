@@ -7,6 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(stringr)
+library(lubridate)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
@@ -32,6 +35,18 @@ data %>% filter(str_detect(id, "^hpg"))
 time_transf <- function(data,column){
   data %>% select()
 }
+
+some_date <- c("01/02/1979", "03/04/1980")
+day(dmy(some_date))
+
+
+data <- data %>%
+  mutate(day_visit = day(dmy(visit_date)),
+         day_reserve = day(dmy(reserve_date)),
+         month_visit = month(dmy(visit_date)),
+         month_reserve = month(dmy(reserve_date)),
+         year_visit = year(dmy(visit_date)),
+         year_reserve = year(dmy(visit_date)))
 ```
 
 
