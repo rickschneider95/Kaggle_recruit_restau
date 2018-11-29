@@ -11,6 +11,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
 
-
+```{r}
+data <- read.csv("data/complete_data.csv")
+data
+View(data)
+data %>% glimpse
+```
 
 
