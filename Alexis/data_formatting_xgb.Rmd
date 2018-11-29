@@ -12,5 +12,26 @@ knitr::opts_chunk$set(echo = TRUE)
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
 
 
+# Keeping only hpg <-> air and air:
+
+```{r}
+data <- read.csv("data/complete_data.csv")
+```
+
+
+```{r}
+data %>% filter(str_detect(id, "^air"))
+```
+
+```{r}
+data %>% filter(str_detect(id, "^hpg"))
+```
+
+
+```{r}
+time_transf <- function(data,column){
+  data %>% select()
+}
+```
 
 
