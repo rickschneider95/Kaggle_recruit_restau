@@ -151,6 +151,8 @@ air_store <- left_join(air_store,date_info,by=c("visit_date"="calendar_date"))
 unique(air_store$holiday_flg)
 ```
 
+
+# Merge try:
 ```{r}
 try <- air_reserve %>%
   mutate(reserve_date = date(reserve_datetime),
@@ -168,6 +170,9 @@ try <- air_reserve %>%
 air_visit_data <- air_visit_data %>%
   mutate(visit_date = date(visit_date))
 
-merge_try <- left_join(air_visit_data,try,by = c("air_store_id","visit_date"))
+merge_try <- full_join(air_visit_data,try,by = c("air_store_id","visit_date"))
+
+levels(as.factor(try$reserve_visitors))
+levels(as.factor(merge_try$reserve_visitors))
 ```
 
