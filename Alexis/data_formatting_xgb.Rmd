@@ -15,6 +15,7 @@ library(mltools)
 library(dplyr)
 library(stringr)
 library(lubridate)
+library(caret)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
@@ -40,6 +41,12 @@ data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
 sum(is.na(data_air %>% group_by(id,visit_date) %>% summarise(total = n())))
 ```
 
+<<<<<<< HEAD
+n_d <- function(data){
+  data <- data %>% filter()
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
+}
+=======
 
 # Filtering NIGHT or DAY : to be discussed
 
@@ -58,8 +65,10 @@ sum(is.na(data_air %>% group_by(id,visit_date) %>% summarise(total = n())))
 # }
 # try <- data_air
 # n_d(try,"noon")
+>>>>>>> 07460a72cecb355ce2ef2919afdc82ce9d54bc76
 ```
 
+#check if we can use the functions in the class with dplyr in functions
 
 # One hot encoding for VISIT time:
 
@@ -71,6 +80,8 @@ vtime_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+
+
 ```
 
 # One hot encoding for RESERVE time:
@@ -83,6 +94,7 @@ rtime_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+
 ```
 
 # One hot encoding for reserve MONTH:
@@ -97,6 +109,8 @@ rmonth_transf <- function(data){
 }
 ```
 
+<<<<<<< HEAD
+=======
 # LOOOUUUUUIIIISSSSS 
 ```{r}
 # datal <- dataset %>%
@@ -110,6 +124,7 @@ rmonth_transf <- function(data){
 #          latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 ```
 
+>>>>>>> 07460a72cecb355ce2ef2919afdc82ce9d54bc76
 # One hot encoding for visit MONTH:
 
 ```{r}
@@ -138,6 +153,7 @@ ryear_transf <- function(data){
 # One hot encoding for visit YEAR:
 
 ```{r}
+
 vyear_transf <- function(data){
   one_h <- data
   one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
@@ -178,7 +194,6 @@ rdayweek_transf <- function(data){
 # One hot encoding for day of week visit
 ```{r}
 #day of week visit et reserve: onehotencoding
-names(data)
 vdayweek_transf <- function(data){
   one_h <- data
   one_h <- one_h %>% select(day_of_the_week_visit)
@@ -193,11 +208,18 @@ DONT RUN
 ```{r}
 lat_transf <- function(data){
   one_h <- data
+<<<<<<< HEAD
+  one_h$day_of_the_week_reserve <- as.factor(one_h$day_of_the_week_reserve)
+  one_h <- one_h %>% select(day_of_the_week_visit)
+=======
   one_h$latitude <- as.factor(one_h$latitude)
   one_h <- one_h %>% select(latitude)
+>>>>>>> 07460a72cecb355ce2ef2919afdc82ce9d54bc76
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+
+#done hot vist day
 ```
 
 # One hot encoding for LATITUDE:
@@ -276,4 +298,33 @@ trytry
 ```{r}
 sum(is.na(data$day_of_the_week_reserve))
 sum(is.na(data$day_of_the_week_visit))
+```
+
+# LOOOUUUUUIIIISSSSS 
+```{r}
+data <- data %>%
+  mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+         day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+         month_visit = month(dmy(visit_date)),   #extract visit month from date
+         month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+         year_visit = year(dmy(visit_date)), #extract visit year from date
+         year_reserve = year(dmy(visit_date)), #extract reserve year from date
+         latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+         latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors),
+         visit_time=as.factor(str_sub(as.character(visit_time), start = 0, end = 3)),
+        reserve_time = as.factor(str_sub(as.character(reserve_time), start = 0, end = 3)),
+        reserve_date = as.factor(str_sub(as.character(reserve_date), start = 6, end = 7)),
+        visit_date=as.factor(str_sub(as.character(visit_date), start = 6, end = 7))) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
+
+
+one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
+visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
+area_name = as.factor(substr(area_name, 0, 8))
+ne_h$day_of_the_week_visit <- as.factor(one_h$day_of_the_week_visit)
+one_h$day_of_the_week_reserve <- as.factor(one_h$day_of_the_week_visit)
+
+# dummify the data
+dmy <- dummyVars(" ~ .", data = data)
+trsf <- data.frame(predict(dmy, newdata = customers))
+trsf
 ```
