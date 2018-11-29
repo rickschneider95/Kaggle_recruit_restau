@@ -35,16 +35,30 @@ data_air <- dataset %>% filter(str_detect(id, "^air"))
 data_hpg <- data %>% filter(str_detect(id, "^hpg"))
 ```
 
+
+# for rick
+```{r}
+sum(is.na(data_air %>% group_by(id,visit_date) %>% summarise(total = n())))
+```
+
+
 # Filtering NIGHT or DAY :
 
 ```{r}
 data_air
+ifelse(5==5,"yes","no")
 
-n_d <- function(data){
-  data <- data %>% filter()
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
-
+n_d <- function(data,period){
+  try <- data
+  try <- try %>% 
+    mutate(visit_time = as.numeric(str_sub(as.character(visit_time), start = 0, end = 3)))
+    ifelse(as.character(period) == "noon",
+    data <- data %>% filter(visit_time <= 16 && visit_time >= 4),
+    data <- data %>% filter(visit_time >= 16 && visit_time <= 4)
+    )
 }
+try <- data_air
+n_d(try,"noon")
 ```
 
 
