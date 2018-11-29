@@ -1,0 +1,16 @@
+---
+title: "format_data_xgb"
+author: "Alexis Laks"
+date: "29/11/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
+
+
+
+
