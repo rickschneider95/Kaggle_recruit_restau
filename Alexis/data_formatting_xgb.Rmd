@@ -13,9 +13,12 @@ library(onehot)
 library(data.table)
 library(mltools)
 install.packages("mltools")
+library(dplyr)
+library(stringr)
+library(lubridate)
 ```
 
-This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
+This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
 
 
 # Keeping only hpg <-> air and air:
@@ -44,6 +47,18 @@ time_transf <- function(data,column){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+
+some_date <- c("01/02/1979", "03/04/1980")
+day(dmy(some_date))
+
+
+data <- data %>%
+  mutate(day_visit = day(dmy(visit_date)),
+         day_reserve = day(dmy(reserve_date)),
+         month_visit = month(dmy(visit_date)),
+         month_reserve = month(dmy(reserve_date)),
+         year_visit = year(dmy(visit_date)),
+         year_reserve = year(dmy(visit_date)))
 ```
 
 # One hot encoding for RESERVE time:
@@ -65,4 +80,3 @@ We have NA's for day of the week reserve and day of the week visit
 sum(is.na(data$day_of_the_week_reserve))
 sum(is.na(data$day_of_the_week_visit))
 ```
-
