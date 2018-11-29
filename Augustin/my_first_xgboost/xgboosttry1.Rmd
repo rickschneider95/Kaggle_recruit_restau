@@ -149,6 +149,8 @@ xgbpred <- predict(xgb1,dtest2)
 xgbpred
 temp5 <- real_estate_test$Price
 mean(abs(xgbpred - temp5))
+library(MLmetrics)
+RMSLE(xgbpred,temp5)
 ```
 
 To recap, given a dataset, here are the steps we will take:
@@ -158,8 +160,8 @@ Let target be the variable you want to predict, namely the number of visitors in
 
 target_train <- TRAIN$target
 target_test <- TEST$target
-dTRAIN <- as.matrix(TRAIN - target)
-dTEST <- as.matrix(TEST - target)
+dTRAIN <- as.matrix(TRAIN %>% select(-target))
+dTEST <- as.matrix(TEST %>% select(-target))
 dTRAIN <- xgb.DMatrix(data = dTRAIN,label = target_train)
 dTEST <- xgb.DMatrix(data = dTEST,label= target_test)
 
