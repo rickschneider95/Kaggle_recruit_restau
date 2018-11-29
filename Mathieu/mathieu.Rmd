@@ -59,8 +59,95 @@ store_id <- read_csv("data/store_id_relation.csv")
 sample<- sample %>% separate(id,into = c('ID', 'date'), sep = 20) 
 sample %>% distinct(ID) %>% nrow() #821
 
-hpg_reserve <- read_csv("data/hpg_reserve.csv") 
-hpg_reserve %>%  distinct(hpg_store_id) %>% nrow() #13325
+#hpg_reserve <- read_csv("data/hpg_reserve.csv") 
+#hpg_reserve %>%  distinct(hpg_store_id) %>% nrow() #13325
+```
+
+
+##SECOND APPROACH
+
+
+```{r}
+rm(list=ls())  
+
+dates <- as.character(seq(as.Date("2016-01-01"),as.Date("2017-05-31"),1))
+#dates <- as.data.frame(dates)
+
+test.dates <- as.character(seq(as.Date("2017-04-23"), as.Date("2017-05-31"), 1))
+#test.dates <- as.data.frame(test.dates)
+
+library(data.table)
+air_visit <- fread("data/air_visit_data.csv")
+air_visit_dcast <- dcast(air_visit, air_store_id ~ visit_date, value.var="visitors", fill=NA)
+
+cols <- c("date", "air_store_id", paste0("b", 0:(7*53), "d_visit"))
+
+data.visit <- data.table()
+
+## construction d'un data frame qui assigne pour chaque ID et chaque date la fréquentation du jour j et des 7*53 jours précédent - une annéé et une semaine 
+for(d in dates) {
+    temp <- air_visit_dcast
+    colnames(temp)[-1] <- paste0("b", as.Date(d)-as.Date(colnames(temp)[-1]), "d_visit")
+    temp <- cbind(date=d, temp)
+    
+    na.cols <- setdiff(cols, colnames(temp))
+    for(col in na.cols) {
+        temp[[col]] <- NA
+    }
+    temp <- temp[, cols, with=FALSE]
+    data.visit <- rbind(data.visit, temp)
+}
+data.visit <- data.visit[!is.na(b0d_visit) | date >= as.character("2017-04-23")]
+
+
+
+```
+
+```{r}
+##### prepare other data #####
+
+air_reserve <- fread("data/air_reserve.csv")
+air_reserve[, date:=as.character(as.Date(visit_datetime))]
+
+date_info1 <- fread("data/date_info.csv")
+
+date_info <- fread("data/date_info.csv")
+
+## Construction de deux nouvelels colonnes : une qui assigne un numéro a chaque jour de la semaine 
+#une seconde qui assigne si le jour d'avant était férié, si le jour meme est férié , si le jour de demain est férié ou non 
+date_info[, dow:=wday(as.Date(calendar_date))]
+date_info[, holiday_flg:=ifelse(dow %in% c(1,7), 1, holiday_flg)]
+date_info[, holiday_flgs3:=paste0(shift(holiday_flg, 1),
+                                  holiday_flg,
+                                  shift(holiday_flg, 1, type="lead"))]
+normal.date <- date_info[dow==1 & holiday_flgs3=="110" |
+                           dow==2 & holiday_flgs3=="100" |
+                           dow==3 & holiday_flgs3=="000" |
+                           dow==4 & holiday_flgs3=="000" |
+                           dow==5 & holiday_flgs3=="000" |
+                           dow==6 & holiday_flgs3=="001" | 
+                           dow==7 & holiday_flgs3=="011"]
+
+
+
+air_store_info1 <- read_csv("data/air_store_info.csv")
+air_store_info1 <- air_store_info1 %>% mutate(air_genre_name = as.factor(air_genre_name)) 
+
+
+                  
+
+air_store_info <- fread("data/air_store_info.csv", drop=3)
+
+# breakdown chaque genre de resto en une colonne = dummy variables 
+air_store_info[, air_genre_name:=as.integer(as.factor(air_genre_name))]
+for(j in 1:max(air_store_info$air_genre_name)) {
+    if(j %in% c(1,6,10)) { next }
+    air_store_info[[paste0("genre_",j)]] <- (air_store_info$air_genre_name == j)*1
+}
+air_store_info[, air_genre_name:=NULL]
+
+
+
 ```
 
 
