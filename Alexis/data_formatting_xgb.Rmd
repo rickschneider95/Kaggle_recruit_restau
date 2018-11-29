@@ -7,6 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(onehot)
+library(data.table)
+library(mltools)
+install.packages("mltools")
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
@@ -15,23 +21,48 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 # Keeping only hpg <-> air and air:
 
 ```{r}
-data <- read.csv("data/complete_data.csv")
+dataset <- read.csv("data/complete_data.csv")
 ```
 
 
 ```{r}
-data %>% filter(str_detect(id, "^air"))
+data <- dataset %>% filter(str_detect(id, "^air"))
 ```
 
 ```{r}
-data %>% filter(str_detect(id, "^hpg"))
+data_hpg <- data %>% filter(str_detect(id, "^hpg"))
 ```
 
+
+# One hot encoding for VISIT time:
 
 ```{r}
 time_transf <- function(data,column){
-  data %>% select()
+  one_h <- data
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
+  one_h <- one_h %>% select(visit_time)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
 }
 ```
 
+# One hot encoding for RESERVE time:
+
+```{r}
+time_transf <- function(data,column){
+  one_h <- data
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
+  one_h <- one_h %>% select(visit_time)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+
+
+We have NA's for day of the week reserve and day of the week visit
+```{r}
+sum(is.na(data$day_of_the_week_reserve))
+sum(is.na(data$day_of_the_week_visit))
+```
 
