@@ -8,130 +8,67 @@ output: html_document
 ```{r}
 library(dplyr)
 library(tidyr)
+library(stringr)
 ```
 
-Load all the data in
 ```{r}
-air_reserve <- read.csv("data/air_reserve.csv")                   #check
-air_store_info <- read.csv("data/air_store_info.csv")             #check
-air_visit_data <- read.csv("data/air_visit_data.csv")             
-data_info <- read.csv("data/date_info.csv")                       #check
-hpg_reserve <- read.csv("data/hpg_reserve.csv")                   #check
-hpg_store_info <- read.csv("data/hpg_store_info.csv")             #check
-store_id_relation <- read.csv("data/store_id_relation.csv")       #check
+#import:
+data <- read.csv("data/complete_data.csv")
 sample_submission <- read.csv("data/sample_submission.csv")
-```
 
-```{r}
-glimpse(air_reserve)
-glimpse(hpg_reserve)
-glimpse(store_id_relation)
+glimpse(data)
 glimpse(sample_submission)
 ```
 
-First, we are going to add the hpg_reserve (with changed hpg ids to air ids) to the air_reserve, and call the data set global:
-```{r}
-
-#rename to id:
-air_reserve <- air_reserve %>% rename(id = air_store_id)
-hpg_reserve <- hpg_reserve %>% rename(id = hpg_store_id)
 
 
-#paste them together:
-reserve <- rbind(air_reserve, hpg_reserve)
 
-```
-
-Now, we need to add air_store_info and hpg_store_info.
+First we need to do a train/test split.As we deal with a time series problem, we need to repsect the chronological order of events. As a result we cannot do a k-fold evaluation. We are going to implement a 80/20% train/test split:
 
 ```{r}
-glimpse(air_store_info)
-glimpse(hpg_store_info)
-```
 
-```{r}
-#rename to id:
-air_store_info <- air_store_info %>% 
-                    rename(id = air_store_id,
-                           genre_name = air_genre_name,
-                           area_name = air_area_name)
-hpg_store_info <- hpg_store_info %>% 
-                    rename(id = hpg_store_id,
-                           genre_name = hpg_genre_name,
-                           area_name = hpg_area_name)
+data <- data %>% arrange(visit_date)
+View(data)
+split_index <- round(nrow(data)*0.8)
 
-#paste them together:
-info <- rbind(air_store_info, hpg_store_info)
+
+
+#train:
+TRAIN <- data[1:split_index,]
+#test:
+TEST <- data[split_index+1:nrow(data),]
 
 ```
 
 
-Now we need to merge reserve and info on id:
 
+
+
+
+
+
+
+Merge with inner_join submission file and data:
 ```{r}
-final <- full_join(reserve,info,by="id")
-View(final)
-```
 
-Data info:
+  
+sample_submission <- sample_submission %>% 
+                        separate(id, into = c("id","predict_date"), sep=20)  
 
-```{r}
-glimpse(final)
-glimpse(data_info)
-```
- 
-Join it on the calender date:
-```{r}
-data_info <- data_info %>% 
-                    rename(visit_date= calendar_date)
+sample_submission <- sample_submission %>% 
+                        separate(predict_date, into = c("error","predict_date"), sep=1) 
 
+sample_submission <- sample_submission %>% 
+                        select(-error)
 
-final <-final %>% 
-                separate(visit_datetime, into = c('visit_date', 'visit_time'), sep = 10) %>% 
-                separate(reserve_datetime, into = c('reserve_date', 'reserve_time'), sep = 10)
-#join
-final <- full_join(final,data_info,by="visit_date")
-#rename
-final <- final %>% 
-            rename(day_of_the_week_visit = day_of_week,
-                   holiday_flg_visit = holiday_flg)
+#join sample_submission with data:
 
-#for reserve:
-data_info <- data_info %>% 
-                    rename(reserve_date= visit_date)
-final <- full_join(final,data_info,by="reserve_date")
-#rename
-final <- final %>% 
-            rename(day_of_the_week_reserve= day_of_week,
-                   holiday_flg_reserve = holiday_flg)
+sub_join <- inner_join(sample_submission,data,by="id")
 
-#View(final)
+glimpse(sub_join)
 ```
 
 
-```{r}
-glimpse(air_visit_data)
-
-air_visit_data <- air_visit_data %>% 
-                    rename(id = air_store_id)
-glimpse(final)
-
-final2 <- full_join(final,air_visit_data,by=c("id","visit_date"))
-glimpse(final2)
-
-```
 
 
-```{r}
-store_id_relation <- store_id_relation  %>% 
-                    rename(id = hpg_store_id)
-final3 <- full_join(final2, store_id_relation, by= "id")
-ind <- !is.na(final3[,"air_store_id"])
-final3[ind,"id"] <- as.character(final3[ind,"air_store_id"])
 
-final3 <- final3[,-16]
-glimpse(final3)
-```
-
-
-final3 is the complete data set!

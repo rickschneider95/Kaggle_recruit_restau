@@ -159,7 +159,7 @@ hpg %>%
 Indeed as expected the first area here is Tokyo-Shinjuku which is one of the most frequented areas in Japan. We could expect Kyoto to be there as well, along with several other major cities but maybe they're just not in this dataset! We'll check for that as well later on, first I want to check which major areas we have data on:
 
 ```{r}
-levels(as.factor(hpg$hpg_area_name)) # These are all the different areas in our data, although I'll group them according to the major city they are attached to.
+levels(as.factor(hpg_store_info$hpg_area_name)) # These are all the different areas in our data, although I'll group them according to the major city they are attached to.
 hpg <- hpg %>%
   mutate(hpg_area_name = case_when(hpg_area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
                    TRUE ~ hpg_area_name)) 
