@@ -35,11 +35,23 @@ data_air <- dataset %>% filter(str_detect(id, "^air"))
 data_hpg <- data %>% filter(str_detect(id, "^hpg"))
 ```
 
+# Filtering NIGHT or DAY :
+
+```{r}
+data_air
+
+n_d <- function(data){
+  data <- data %>% filter()
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
+
+}
+```
+
 
 # One hot encoding for VISIT time:
 
 ```{r}
-vtime_transf <- function(data,column){
+vtime_transf <- function(data){
   one_h <- data
   one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
   one_h <- one_h %>% select(visit_time)
@@ -51,7 +63,7 @@ vtime_transf <- function(data,column){
 # One hot encoding for RESERVE time:
 
 ```{r}
-rtime_transf <- function(data,column){
+rtime_transf <- function(data){
   one_h <- data
   one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3))
   one_h <- one_h %>% select(reserve_time)
@@ -63,7 +75,7 @@ rtime_transf <- function(data,column){
 # One hot encoding for reserve MONTH:
 
 ```{r}
-rmonth_transf <- function(data,column){
+rmonth_transf <- function(data){
   one_h <- data
   one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7))
   one_h <- one_h %>% select(reserve_date)
@@ -89,7 +101,7 @@ data <- data %>%
 # One hot encoding for visit MONTH:
 
 ```{r}
-vmonth_transf <- function(data,column){
+vmonth_transf <- function(data){
   one_h <- data
   one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7))
   one_h <- one_h %>% select(visit_date)
@@ -101,7 +113,7 @@ vmonth_transf <- function(data,column){
 # One hot encoding for reserve YEAR:
 
 ```{r}
-ryear_transf <- function(data,column){
+ryear_transf <- function(data){
   one_h <- data
   one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
   one_h <- one_h %>% select(reserve_date)
@@ -113,7 +125,7 @@ ryear_transf <- function(data,column){
 # One hot encoding for visit YEAR:
 
 ```{r}
-vyear_transf <- function(data,column){
+vyear_transf <- function(data){
   one_h <- data
   one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
   one_h <- one_h %>% select(visit_date)
@@ -121,6 +133,25 @@ vyear_transf <- function(data,column){
   data <- data %>% cbind(one_h)
 }
 ```
+
+# One hot encoding AREA:
+
+There are many different levels for area names, although they all appartain to one particular city. In addition the longitude and latitudes are approximate (on for each area not for each id). I propose to solve this 
+
+```{r}
+area_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>%
+    select(area_name) %>% 
+    mutate(area_name = as.character(area_name)) %>% 
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                   TRUE ~ area_name)) %>% 
+    mutate(area_name = as.factor(substr(area_name, 0, 8)))
+  one_h <- one_hot(as.data.table(one_h))
+  try <- data %>% cbind(one_h)
+}
+```
+
 
 
 ```{r}
@@ -134,12 +165,14 @@ group_by id,date and summarise -> get the total number of visits per day. (per n
 
 ```{r}
 try <- data_air
-try <- rtime_transf(try,reserve_time)
-try <- vtime_transf(try,visit_time)
-try <- rmonth_transf(try,visit_time)
-try <- vmonth_transf(try,visit_time)
-try <- ryear_transf(try,visit_time)
-try <- vyear_transf(try,visit_time)
+try <- rtime_transf(try)
+try <- vtime_transf(try)
+try <- rmonth_transf(try)
+try <- vmonth_transf(try)
+try <- ryear_transf(try)
+try <- vyear_transf(try)
+try <- area_transf(try)
+
 
 try
 ```
