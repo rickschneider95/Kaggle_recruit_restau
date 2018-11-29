@@ -42,8 +42,7 @@ labels <- train$target
 ts_label <- test$target
 new_tr <- model.matrix(~.+0,data = train[,-c("target"),with=F]) 
 new_ts <- model.matrix(~.+0,data = test[,-c("target"),with=F])
-View(new_tr)
-View(new_ts)
+
 colnames(new_tr)
 colnames(new_ts)
 
@@ -67,15 +66,12 @@ library(dplyr)
 params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
 
 xgbcv <- xgb.cv( params = params, data = dtrain, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
-
+xgbcv
 
 xgb1 <- xgb.train (params = params, data = dtrain, nrounds = 79, watchlist = list(val=dtest,train=dtrain), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
 xgbpred <- predict(xgb1,dtest)
-xgbpred
-mean(xgbpred)
 xgbpred <- ifelse (xgbpred > 0.5,1,0)
-dtrain
-dtest
+xgbpred
 
 testcompare <- read.table("adult_test.txt",header = F,sep = ",",col.names = setcol,skip = 1, na.strings = c(" ?"),stringsAsFactors = F)
 temp <- testcompare$target
@@ -86,35 +82,43 @@ sum(as.numeric(rbinom(16000,1,0.5) != rbinom(16000,1,0.5)))
 #The above is how many times it'd be wrong if it were random, so clearly we are ok, altho we only predict correctly in 1-2063/16000 = 87% that's quite good 
 
 
+
+```
 #Imma try to implement the xgboost now with the real estate dataset to see if we can fio
 
+
+
+
+
+
+
+```{r}
 real_estate <- read.csv("realestate.csv")
+View(real_estate)
 real_estate_train <- real_estate %>% slice(1:400) 
 real_estate_test <- real_estate %>% slice(401:521)
 #View(real_estate)
-price <- real_estate_train$Price
+price_train <- real_estate_train$Price
 price_test <- real_estate_test$Price
 real_estate_train <- real_estate_train[,-2]
-real_estate2 <- as.matrix(real_estate_train)
-real_estate_test2 <- real_estate_test2[,-2]
+real_estate_train2 <- as.matrix(real_estate_train)
+real_estate_test2 <- real_estate_test[,-2]
 real_estate_test2 <- as.matrix(real_estate_test2)
-dtrain2 <- xgb.DMatrix(data = real_estate2,label = price)
+dtrain2 <- xgb.DMatrix(data = real_estate_train2,label = price_train)
 dtest2 <- xgb.DMatrix(data = real_estate_test2,label= price_test)
 
 
-params <- list(booster = "gbtree", objective = "reg:linear", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+params <- list(booster = "gblinear", objective = "reg:linear", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
 
 xgbcv <- xgb.cv( params = params, data = dtrain2, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
 xgbcv
 
 xgb1 <- xgb.train (params = params, data = dtrain2, nrounds = 79, watchlist = list(val=dtest2,train=dtrain2), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
 
-View(real_estate2)
-View(real_estate_test2)
 xgbpred <- predict(xgb1,dtest2)
 
 xgbpred
-?xgb.cv
-
+temp5 <- real_estate_test$Price
+mean(abs(xgbpred - temp5))
 ```
 
