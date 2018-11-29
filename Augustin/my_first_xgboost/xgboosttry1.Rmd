@@ -46,6 +46,8 @@ new_ts <- model.matrix(~.+0,data = test[,-c("target"),with=F])
 colnames(new_tr)
 colnames(new_ts)
 
+
+
 new_tr <- new_tr[,-74]
 class(new_tr)
 #new_ts[,-"native.countryHoland-Netherlands"] <- 
@@ -55,13 +57,15 @@ labels2 <- as.numeric(labels == ">50K")
 ts_label2 <- as.numeric(ts_label == ">50K")
 #View(labels)
 
+
 library(xgboost)
 ?xgb.DMatrix
 dtrain <- xgb.DMatrix(data = new_tr,label = labels2) 
 dtest <- xgb.DMatrix(data = new_ts,label=ts_label2)
-dtrain
-dtest
 library(dplyr)
+
+
+
 
 params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
 
@@ -82,6 +86,31 @@ sum(as.numeric(rbinom(16000,1,0.5) != rbinom(16000,1,0.5)))
 #The above is how many times it'd be wrong if it were random, so clearly we are ok, altho we only predict correctly in 1-2063/16000 = 87% that's quite good 
 
 
+
+
+new_tr3 <- model.matrix(~.+0,data = train[,-c("age"),with=F]) 
+new_ts3 <- model.matrix(~.+0,data = test[,-c("age"),with=F])
+setdiff(colnames(new_tr3),colnames(new_ts3))
+setdiff(colnames(new_ts3),colnames(new_tr3))
+
+View(new_ts3)
+View(new_tr3)
+
+new_tr3 <- new_tr3[,-73]
+labels3 <- train$age
+ts_labels3 <- test$age
+
+dtrain3 <- xgb.DMatrix(data = new_tr3,label = labels3) 
+dtest3 <- xgb.DMatrix(data = new_ts3,label=ts_labels3)
+
+params3 <- list(booster = "gblinear", objective = "reg:linear", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+
+xgbcv3 <- xgb.cv( params = params3, data = dtrain3, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
+xgbcv3
+
+xgb3 <- xgb.train (params = params, data = dtrain3, nrounds = 79, watchlist = list(val=dtest3,train=dtrain3), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+
+xgbpred <- predict(xgb3,dtest3)
 
 ```
 #Imma try to implement the xgboost now with the real estate dataset to see if we can fio
@@ -121,4 +150,27 @@ xgbpred
 temp5 <- real_estate_test$Price
 mean(abs(xgbpred - temp5))
 ```
+
+To recap, given a dataset, here are the steps we will take:
+Dataset = TRAIN + TEST 
+
+Let target be the variable you want to predict, namely the number of visitors in a day
+
+target_train <- TRAIN$target
+target_test <- TEST$target
+dTRAIN <- as.matrix(TRAIN - target)
+dTEST <- as.matrix(TEST - target)
+dTRAIN <- xgb.DMatrix(data = dTRAIN,label = target_train)
+dTEST <- xgb.DMatrix(data = dTEST,label= target_test)
+
+params <- list(booster = "gblinear", objective = "reg:linear", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)     #we can update later at will
+
+xgbcv <- xgb.cv( params = params, data = dTRAIN, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
+
+xgb1 <- xgb.train (params = params, data = dTRAIN, nrounds = 79, watchlist = list(val=dTEST,train=dTRAIN), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+
+xgbpred <- predict(xgb1,dTEST)
+
+
+
 
