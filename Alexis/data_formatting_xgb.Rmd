@@ -42,24 +42,22 @@ data_hpg <- data %>% filter(str_detect(id, "^hpg"))
 ```{r}
 time_transf <- function(data,column){
   one_h <- data
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) #put visit_time as factor, and only extract the hour for the time: the first two components of the time: ex 19:00:00 will be converted to 19
   one_h <- one_h %>% select(visit_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
-
-
 ```
 ```{r}
 data <- data %>%
-  mutate(day_visit = day(dmy(visit_date)),
-         day_reserve = day(dmy(reserve_date)),
-         month_visit = month(dmy(visit_date)),
-         month_reserve = month(dmy(reserve_date)),
-         year_visit = year(dmy(visit_date)),
-         year_reserve = year(dmy(visit_date)),
-         latency_days=ifelse(is.na(reserve_date),as.numeric(as.Date(visit_date)-as.Date(reserve_date)),0),
-         latency_people=ifelse(is.na(reserve_visitors),visitors-reserve_visitors,0))
+  mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+         day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+         month_visit = month(dmy(visit_date)),   #extract visit month from date
+         month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+         year_visit = year(dmy(visit_date)), #extract visit year from date
+         year_reserve = year(dmy(visit_date)), #extract reserve year from date
+         latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+         latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 ```
 
 # One hot encoding for RESERVE time:
@@ -72,6 +70,7 @@ time_transf <- function(data,column){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+#day of week visit et reserve: onehotencoding
 ```
 
 
