@@ -237,9 +237,9 @@ try
 # Creating xgb one-hot encoded data file:
 
 ```{r}
-try <- try[,-c(2:5)]
-try <- try[,-c(3:7)]
-final_try <- try[,-c(4)]
+try <- try[,-c(3:5)]
+try <- try[,-c(4:8)]
+final_try <- try[,-c(5)]
 
 write.csv(final_try, "data/data_1h_xgb.csv", row.names = FALSE)
 
