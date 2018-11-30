@@ -190,7 +190,6 @@ rdayweek_transf <- function(data){
 
 # One hot encoding for day of week visit
 ```{r}
-#day of week visit et reserve: onehotencoding
 vdayweek_transf <- function(data){
   one_h <- data
   one_h <- one_h %>% select(day_of_the_week_visit)
@@ -210,8 +209,6 @@ lat_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
-
-#done hot vist day
 ```
 
 # One hot encoding for LATITUDE:
@@ -222,6 +219,18 @@ lon_transf <- function(data){
   one_h <- data
   one_h$longitude <- as.factor(str_sub(as.character(one_h$longitude), start = 0, end = 4))
   one_h <- one_h %>% select(longitude)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for GENRE:
+
+```{r}
+genre_transf <- function(data){
+  one_h <- data
+  one_h$genre_name <- as.factor(one_h$genre_name)
+  one_h <- one_h %>% select(genre_name)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
@@ -242,6 +251,9 @@ try <- vyear_transf(try)
 try <- area_transf(try)
 try <- rdayweek_transf(try)
 try <- vdayweek_transf(try)
+try <- genre_transf(try)
+
+
 # try <- lat_transf(try)
 # try <- lon_transf(try) Doesn't work, i'll look more into it later on but this fct is kinda bs tbh
 
@@ -270,7 +282,7 @@ trytry
 #                          day_of_the_week_visit,
 #                          day_of_the_week_reserve
 #                          )
-#                       ) ==> DONT KNOW WHY NOT WORKING
+#                       ) ==> DONT KNOW WHY NOT WORKING --> Try map!!!
 ```
 
 
@@ -284,6 +296,33 @@ trytry
       => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately
 
 -We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0
+
+- genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision)
+
+```{r}
+  # one_h <- data_air %>% filter(genre_name %in% c("Japanese style",
+  #                                            "International cuisine",
+  #                                            "Creation",
+  #                                            "Seafood",
+  #                                            "Grilled meat",
+  #                                            "Italian",
+  #                                            "Spain Bar/Italian Bar",
+  #                                            "Chinese general",
+  #                                            "Japanese food in general",
+  #                                            "Japanese cuisine/Kaiseki",
+  #                                            "Karaoke",
+  #                                            "Creative Japanese food",
+  #                                            "Shabu-shabu/Sukiyaki",
+  #                                            "Okonomiyaki/Monja/Teppanyaki",
+  #                                            "Party",
+  #                                            "Korean cuisine",
+  #                                            "French",
+  #                                            "Steak/Hamburger/Curry",
+  #                                            "Bistro",
+  #                                            "Cafe")
+  #                          )
+```
+
 
 - We have NA's for day of the week reserve and day of the week visit:
 
