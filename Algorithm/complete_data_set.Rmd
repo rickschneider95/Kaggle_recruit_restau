@@ -63,15 +63,28 @@ hpg_store_info <- hpg_store_info %>%
 #paste them together:
 info <- rbind(air_store_info, hpg_store_info)
 
-```
+nrow(info)
+nrow(reserve)
 
+info %>% filter(id %in% reserve$id) %>% summarize(n())
+reserve %>% filter(id %in% info$id) %>% summarize(n())
+```
+At this point, we have not generated NA's yet (which is normal, as we have not merged the data sets, and the csv files that we got have no missing values).
 
 Now we need to merge reserve and info on id:
 
 ```{r}
-final <- full_join(reserve,info,by="id")
-View(final)
+#final <- full_join(reserve,info,by="id")
+final <- inner_join(reserve,info,by="id")
+
+nrow(final)
+
+colSums(is.na.data.frame(final))
+
+#View(final)
 ```
+We do an inner join, as a full_join will create a huge chunk of missing data, and will create a data set that will not be helpful for the prediction. We would need to adapt a whole stretegy to those NA's, and imputng them would not make much sense, as we do not have enough data to predict/impute them well.
+
 
 Data info:
 
@@ -85,12 +98,13 @@ Join it on the calender date:
 data_info <- data_info %>% 
                     rename(visit_date= calendar_date)
 
-
 final <-final %>% 
                 separate(visit_datetime, into = c('visit_date', 'visit_time'), sep = 10) %>% 
                 separate(reserve_datetime, into = c('reserve_date', 'reserve_time'), sep = 10)
-#join
+
+#join, as we do not want to loose data here!
 final <- full_join(final,data_info,by="visit_date")
+
 #rename
 final <- final %>% 
             rename(day_of_the_week_visit = day_of_week,
@@ -106,7 +120,19 @@ final <- final %>%
                    holiday_flg_reserve = holiday_flg)
 
 #View(final)
+
 ```
+
+This last operation created 39 rows with only NA's!, they only contain dates, and should therefore be deleted.
+```{r}
+colSums(is.na.data.frame(final))
+nrow(final)                          #963.725
+final <- drop_na(final)              #963.686
+nrow(final)
+colSums(is.na.data.frame(final))
+```
+
+
 
 
 ```{r}
@@ -118,18 +144,20 @@ glimpse(final)
 
 final2 <- full_join(final,air_visit_data,by=c("id","visit_date"))
 glimpse(final2)
-
+#colSums(is.na.data.frame(final2))
 ```
 
 
 ```{r}
+#join on store_id_relation and change names of hpg to air
 store_id_relation <- store_id_relation  %>% 
                     rename(id = hpg_store_id)
 final3 <- full_join(final2, store_id_relation, by= "id")
 ind <- !is.na(final3[,"air_store_id"])
 final3[ind,"id"] <- as.character(final3[ind,"air_store_id"])
 
-final3 <- final3[,-16]
+final3 <- final3 %>% select(-air_store_id)
+
 glimpse(final3)
 
 nrow(final3)
