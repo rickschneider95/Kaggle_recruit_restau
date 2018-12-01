@@ -131,7 +131,14 @@ final3[ind,"id"] <- as.character(final3[ind,"air_store_id"])
 
 final3 <- final3[,-16]
 glimpse(final3)
+
+nrow(final3)
+
+write.csv(final3, file="data/complete_data.csv", row.names = FALSE) #run only once and check it's in your data folder
+final_data <- read.csv("data/complete_data.csv")
+nrow(final_data)
+#final_data
 ```
 
 
-final3 is the complete data set!
+final3 is the complete data set, it is exported in a csv file!

@@ -7,9 +7,19 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(onehot)
+library(data.table)
+library(mltools)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(caret)
 ```
 
-This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model. 
+This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
+
 
 ```{r}
 data <- read.csv("data/complete_data.csv")
@@ -17,5 +27,335 @@ data
 View(data)
 data %>% glimpse
 ```
+# Keeping only hpg <-> air and air:
+
+```{r}
+dataset <- read.csv("data/complete_data.csv")
+```
+
+```{r}
+data_air <- dataset %>% filter(str_detect(id, "^air"))
+```
+
+```{r}
+data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
+```
 
 
+# for rick
+```{r}
+sum(is.na(data_air %>% group_by(id,visit_date) %>% summarise(total = n())))
+```
+
+
+# Filtering NIGHT or DAY : to be discussed
+
+```{r}
+# data_air
+# ifelse(5==5,"yes","no")
+#
+# n_d <- function(data,time){ # Time is to be defined by
+#   try <- data
+#   try <- try %>%
+#     mutate(visit_time = as.numeric(str_sub(as.character(visit_time), start = 0, end = 3)))
+#     ifelse(as.character(period) == "noon",
+#     data <- data %>% filter(visit_time <= 16 && visit_time >= 4),
+#     data <- data %>% filter(visit_time >= 16 && visit_time <= 4)
+#     )
+# }
+# try <- data_air
+# n_d(try,"noon")
+```
+
+#check if we can use the functions in the class with dplyr in functions
+
+# One hot encoding for VISIT time:
+
+```{r}
+vtime_transf <- function(data){
+  one_h <- data
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) #put visit_time as factor, and only extract the hour for the time: the first two components of the time: ex 19:00:00 will be converted to 19
+  one_h <- one_h %>% select(visit_time)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+
+
+```
+
+# One hot encoding for RESERVE time:
+
+```{r}
+rtime_transf <- function(data){
+  one_h <- data
+  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3))
+  one_h <- one_h %>% select(reserve_time)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+
+```
+
+# One hot encoding for reserve MONTH:
+
+```{r}
+rmonth_transf <- function(data){
+  one_h <- data
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7))
+  one_h <- one_h %>% select(reserve_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# LOOOUUUUUIIIISSSSS
+```{r}
+# datal <- dataset %>%
+#   mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+#          day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+#          month_visit = month(dmy(visit_date)),   #extract visit month from date
+#          month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+#          year_visit = year(dmy(visit_date)), #extract visit year from date
+#          year_reserve = year(dmy(visit_date)), #extract reserve year from date
+#          latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+#          latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
+```
+
+>>>>>>> 07460a72cecb355ce2ef2919afdc82ce9d54bc76
+# One hot encoding for visit MONTH:
+
+```{r}
+vmonth_transf <- function(data){
+  one_h <- data
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7))
+  one_h <- one_h %>% select(visit_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+
+```
+
+# One hot encoding for reserve YEAR:
+
+```{r}
+ryear_transf <- function(data){
+  one_h <- data
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
+  one_h <- one_h %>% select(reserve_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for visit YEAR:
+
+```{r}
+
+vyear_transf <- function(data){
+  one_h <- data
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
+  one_h <- one_h %>% select(visit_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding AREA:
+
+There are many different levels for area names, although they all appartain to one particular city. In addition the longitude and latitudes are approximate (on for each area not for each id). I propose to solve this
+
+```{r}
+area_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>%
+    select(area_name) %>%
+    mutate(area_name = as.character(area_name)) %>%
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                   TRUE ~ area_name)) %>%
+    mutate(area_name = as.factor(substr(area_name, 0, 8)))
+  one_h <- one_hot(as.data.table(one_h))
+  try <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for day of week reserve
+```{r}
+rdayweek_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>% select(day_of_the_week_visit)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for day of week visit
+```{r}
+vdayweek_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>% select(day_of_the_week_visit)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for LONGITUDE:
+DONT RUN
+
+```{r}
+lat_transf <- function(data){
+  one_h <- data
+  one_h$latitude <- as.factor(one_h$latitude)
+  one_h <- one_h %>% select(latitude)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for LATITUDE:
+DONT RUN
+
+```{r}
+lon_transf <- function(data){
+  one_h <- data
+  one_h$longitude <- as.factor(str_sub(as.character(one_h$longitude), start = 0, end = 4))
+  one_h <- one_h %>% select(longitude)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for GENRE:
+
+```{r}
+genre_transf <- function(data){
+  one_h <- data
+  one_h$genre_name <- as.factor(one_h$genre_name)
+  one_h <- one_h %>% select(genre_name)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# TRY CHUNK ( TRY MY CHUNK (:^<) )
+
+this chunk is for you to test out the different one hot encoding functions. have fun.
+
+```{r}
+try <- data_air
+try <- rtime_transf(try)
+try <- vtime_transf(try)
+try <- rmonth_transf(try)
+try <- vmonth_transf(try)
+try <- ryear_transf(try)
+try <- vyear_transf(try)
+try <- area_transf(try)
+try <- rdayweek_transf(try)
+try <- vdayweek_transf(try)
+try <- genre_transf(try)
+
+
+# try <- lat_transf(try)
+# try <- lon_transf(try) Doesn't work, i'll look more into it later on but this fct is kinda bs tbh
+
+try
+```
+
+# Creating xgb one-hot encoded data file:
+
+```{r}
+try <- try[,-c(3:5)]
+try <- try[,-c(4:8)]
+final_try <- try[,-c(5)]
+
+write.csv(final_try, "data/data_1h_xgb.csv", row.names = FALSE)
+
+trytry <- read.csv("data/data_1h_xgb.csv")
+trytry
+# try <- try %>% select(-c(visit_date,
+#                          visit_time,
+#                          reserve_date,
+#                          reserve_time,
+#                          genre_name,
+#                          area_name,
+#                          latitude,
+#                          longitude,
+#                          day_of_the_week_visit,
+#                          day_of_the_week_reserve
+#                          )
+#                       ) ==> DONT KNOW WHY NOT WORKING --> Try map!!!
+```
+
+
+**NOTES**
+
+- Need to one hot code genres!
+
+- replace reservation times by average diff in res/visit for each ID !!!
+
+-group_by id,date and summarise -> get the total number of visits per day. (per noon,night?)
+      => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately
+
+-We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0
+
+- genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision)
+
+```{r}
+  # one_h <- data_air %>% filter(genre_name %in% c("Japanese style",
+  #                                            "International cuisine",
+  #                                            "Creation",
+  #                                            "Seafood",
+  #                                            "Grilled meat",
+  #                                            "Italian",
+  #                                            "Spain Bar/Italian Bar",
+  #                                            "Chinese general",
+  #                                            "Japanese food in general",
+  #                                            "Japanese cuisine/Kaiseki",
+  #                                            "Karaoke",
+  #                                            "Creative Japanese food",
+  #                                            "Shabu-shabu/Sukiyaki",
+  #                                            "Okonomiyaki/Monja/Teppanyaki",
+  #                                            "Party",
+  #                                            "Korean cuisine",
+  #                                            "French",
+  #                                            "Steak/Hamburger/Curry",
+  #                                            "Bistro",
+  #                                            "Cafe")
+  #                          )
+```
+
+
+- We have NA's for day of the week reserve and day of the week visit:
+
+```{r}
+sum(is.na(data$day_of_the_week_reserve))
+sum(is.na(data$day_of_the_week_visit))
+```
+
+# LOOOUUUUUIIIISSSSS
+```{r}
+data <- data %>%
+  mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+         day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+         month_visit = month(dmy(visit_date)),   #extract visit month from date
+         month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+         year_visit = year(dmy(visit_date)), #extract visit year from date
+         year_reserve = year(dmy(visit_date)), #extract reserve year from date
+         latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+         latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors),
+         visit_time=as.factor(str_sub(as.character(visit_time), start = 0, end = 3)),
+        reserve_time = as.factor(str_sub(as.character(reserve_time), start = 0, end = 3)),
+        reserve_date = as.factor(str_sub(as.character(reserve_date), start = 6, end = 7)),
+        visit_date=as.factor(str_sub(as.character(visit_date), start = 6, end = 7))) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
+
+
+one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
+visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
+area_name = as.factor(substr(area_name, 0, 8))
+ne_h$day_of_the_week_visit <- as.factor(one_h$day_of_the_week_visit)
+one_h$day_of_the_week_reserve <- as.factor(one_h$day_of_the_week_visit)
+
+# dummify the data
+dmy <- dummyVars(" ~ .", data = data)
+trsf <- data.frame(predict(dmy, newdata = customers))
+trsf
+```

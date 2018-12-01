@@ -8,130 +8,142 @@ output: html_document
 ```{r}
 library(dplyr)
 library(tidyr)
+library(stringr)
+library(xgboost)
+#library(MLmetrics)
 ```
 
-Load all the data in
 ```{r}
-air_reserve <- read.csv("data/air_reserve.csv")                   #check
-air_store_info <- read.csv("data/air_store_info.csv")             #check
-air_visit_data <- read.csv("data/air_visit_data.csv")             
-data_info <- read.csv("data/date_info.csv")                       #check
-hpg_reserve <- read.csv("data/hpg_reserve.csv")                   #check
-hpg_store_info <- read.csv("data/hpg_store_info.csv")             #check
-store_id_relation <- read.csv("data/store_id_relation.csv")       #check
+#import:
+#data <- read.csv("data/complete_data.csv")
+data <- read.csv("data/data_1h_xgb.csv")
+data_c <- data
 sample_submission <- read.csv("data/sample_submission.csv")
+nrow(data_c)
+#glimpse(data)
+sum(is.na(data$visitors))
+data <- data[is.na(data$visitors)==FALSE,]
+#glimpse(data)
+
 ```
 
+
+
+
+First we need to do a train/test split.As we deal with a time series problem, we need to repsect the chronological order of events. As a result we cannot do a k-fold evaluation. We are going to implement a 80/20% train/test split:
+
 ```{r}
-glimpse(air_reserve)
-glimpse(hpg_reserve)
-glimpse(store_id_relation)
+##only at beginning, then understand why !, NA, get rid in feature engineering!
+colSums(is.na.data.frame(data))   #repeating pattern of 224559 missing values!!! why?
+data <- drop_na(data)
+nrow(data)   # only 87181 left ...
+
+
+#sort by date in order to do chronological test/train split:
+data <- data %>% arrange(visit_date)
+#glimpse(data)
+#get the number for split:
+split_index <- round(nrow(data)*0.8)
+
+id_visit_date <- data %>% select(id,visit_date)
+
+data <- data %>% select(-id)
+data <- data %>%select(-visit_date)
+
+#change response variable name to target:
+data <- data %>% rename(target = visitors)
+
+
+#train:
+TRAIN <- data[1:split_index,]
+#test:
+TEST <- data[split_index+1:nrow(data),]
+
+
+```
+
+XGB:
+```{r}
+target_train <- TRAIN$target
+target_test <- TEST$target
+dTRAIN <- as.matrix(TRAIN %>% select(-target))
+dTEST <- as.matrix(TEST %>% select(-target))
+dTRAIN <- xgb.DMatrix(data = dTRAIN,label = target_train)
+dTEST <- xgb.DMatrix(data = dTEST,label= target_test)
+
+
+params <- list(booster = "gblinear", objective = "reg:linear", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)     #we can update later at will
+
+#xgbcv <- xgb.cv( params = params, data = dTRAIN, nrounds = 100, nfold = 5, showsd = T, stratified = T, print.every.n = 10, early.stop.round = 20, maximize = F)
+
+xgb1 <- xgb.train (params = params, data = dTRAIN, nrounds = 79, watchlist = list(val=dTEST,train=dTRAIN), print.every.n = 10, early.stop.round = 10, maximize = F , eval_metric = "error")
+
+xgbpred <- predict(xgb1,dTEST)
+#xgbpred #with dropped NA, it is working !!!
+#evaluate:
+#RMSLE(xgbpred,TEST$target)
+```
+
+paste prediction back to the dates + merge date and id
+```{r}
+#xgbpred as data frame:
+xgbpred <- data.frame(xgbpred)
+
+p <- paste(id_visit_date$id,sep="_",id_visit_date$visit_date)
+xgbpred <- xgbpred %>% mutate(id = p)
+View(xgbpred)
+
+```
+Problem: we see the same date for the same id! +different predictions !
+
+37.52593
+air_2cee51fa6fdf6c0d_2016-01-08
+253
+30.06035
+air_2cee51fa6fdf6c0d_2016-01-08
+254
+37.50648
+air_2cee51fa6fdf6c0d_2016-01-08
+
+
+
+
+
+
+
+
+How does the final submission work???
+
+In the train test case, our feature engineering creates features with date. In order for the algorithm to work, we are going to call predict() on the sample submission file, which needs to have the same format than our data before!!! This means we need to merge it, however, all features related to date, must be recalculated here, as we have dates in the future!!!! For test, this was not the case, as the dates were already calculated before in the feature engineering file, as we didnt have new input!
+
+
+Merge with inner_join submission file and data:
+```{r}
+
+#split date from id:  
+sample_submission <- sample_submission %>% 
+                        separate(id, into = c("id","predict_date"), sep=20)  
+
+sample_submission <- sample_submission %>% 
+                        separate(predict_date, into = c("error","predict_date"), sep=1) 
+
+sample_submission <- sample_submission %>% 
+                        select(-error)
+
+
+#join sample_submission with data:
 glimpse(sample_submission)
-```
 
-First, we are going to add the hpg_reserve (with changed hpg ids to air ids) to the air_reserve, and call the data set global:
-```{r}
+sub_set <- data %>% filter(id %in% sample_submission$id)
 
-#rename to id:
-air_reserve <- air_reserve %>% rename(id = air_store_id)
-hpg_reserve <- hpg_reserve %>% rename(id = hpg_store_id)
+sub_join <- inner_join(sample_submission,data,by="id")
 
+glimpse(sub_set)
 
-#paste them together:
-reserve <- rbind(air_reserve, hpg_reserve)
-
-```
-
-Now, we need to add air_store_info and hpg_store_info.
-
-```{r}
-glimpse(air_store_info)
-glimpse(hpg_store_info)
-```
-
-```{r}
-#rename to id:
-air_store_info <- air_store_info %>% 
-                    rename(id = air_store_id,
-                           genre_name = air_genre_name,
-                           area_name = air_area_name)
-hpg_store_info <- hpg_store_info %>% 
-                    rename(id = hpg_store_id,
-                           genre_name = hpg_genre_name,
-                           area_name = hpg_area_name)
-
-#paste them together:
-info <- rbind(air_store_info, hpg_store_info)
 
 ```
 
 
-Now we need to merge reserve and info on id:
-
-```{r}
-final <- full_join(reserve,info,by="id")
-View(final)
-```
-
-Data info:
-
-```{r}
-glimpse(final)
-glimpse(data_info)
-```
- 
-Join it on the calender date:
-```{r}
-data_info <- data_info %>% 
-                    rename(visit_date= calendar_date)
 
 
-final <-final %>% 
-                separate(visit_datetime, into = c('visit_date', 'visit_time'), sep = 10) %>% 
-                separate(reserve_datetime, into = c('reserve_date', 'reserve_time'), sep = 10)
-#join
-final <- full_join(final,data_info,by="visit_date")
-#rename
-final <- final %>% 
-            rename(day_of_the_week_visit = day_of_week,
-                   holiday_flg_visit = holiday_flg)
 
-#for reserve:
-data_info <- data_info %>% 
-                    rename(reserve_date= visit_date)
-final <- full_join(final,data_info,by="reserve_date")
-#rename
-final <- final %>% 
-            rename(day_of_the_week_reserve= day_of_week,
-                   holiday_flg_reserve = holiday_flg)
-
-#View(final)
-```
-
-
-```{r}
-glimpse(air_visit_data)
-
-air_visit_data <- air_visit_data %>% 
-                    rename(id = air_store_id)
-glimpse(final)
-
-final2 <- full_join(final,air_visit_data,by=c("id","visit_date"))
-glimpse(final2)
-
-```
-
-
-```{r}
-store_id_relation <- store_id_relation  %>% 
-                    rename(id = hpg_store_id)
-final3 <- full_join(final2, store_id_relation, by= "id")
-ind <- !is.na(final3[,"air_store_id"])
-final3[ind,"id"] <- as.character(final3[ind,"air_store_id"])
-
-final3 <- final3[,-16]
-glimpse(final3)
-```
-
-
-final3 is the complete data set!
