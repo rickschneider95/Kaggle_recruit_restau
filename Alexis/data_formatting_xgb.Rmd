@@ -25,10 +25,12 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 
 ```{r}
 dataset <- read.csv("data/complete_data.csv")
+colSums(is.na(dataset))
 ```
 
 ```{r}
 data_air <- dataset %>% filter(str_detect(id, "^air"))
+sum(is.na(data_air))
 ```
 
 ```{r}
@@ -218,6 +220,23 @@ area_transf <- function(data){
 
 Difference is huge, we get 15 levels with the above function vs 130 from the basic one. TAKE THIS ONE PLEASE SENPAI
 
+# one hot encoding for LATENCY
+
+```{r}
+latency_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>%
+    mutate(latency_days = as.integer(ifelse(is.na(reserve_date), 0, as.numeric(as.Date(visit_date) - as.Date(reserve_date))))) %>% 
+    select(latency_days) %>% 
+    mutate(latency_days = as.factor(case_when(latency_days >= 0 & latency_days <= 7 ~ "casual",
+                                              latency_days > 7 & latency_days <= 30 ~ "fancy",
+                                                   TRUE ~ "very fancy")))
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+
 ## TRY CHUNK ( TRY MY CHUNK (:^<) )
 
 this chunk is for you to test out the different one hot encoding functions. have fun.
@@ -261,7 +280,7 @@ try
 - We have NA's for day of the week reserve and day of the week visit:
 
 ```{r}
-sum(is.na(data$day_of_the_week_reserve))
+sum(is.na(data_air$day_of_the_week_reserve))
 sum(is.na(data$day_of_the_week_visit))
 ```
 
@@ -276,7 +295,11 @@ write.csv(final_try, "data/data_1h_xgb.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb.csv")
 trytry
+
+colSums(is.na.data.frame(trytry))
+nrow(trytry)
 ```
+
 
 
 
