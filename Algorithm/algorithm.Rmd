@@ -28,16 +28,13 @@ data <- data[is.na(data$visitors)==FALSE,]
 ```
 
 
-
-
-First we need to do a train/test split.As we deal with a time series problem, we need to repsect the chronological order of events. As a result we cannot do a k-fold evaluation. We are going to implement a 80/20% train/test split:
+First we need to do a train/test split. As we deal with a time series problem, we need to respect the chronological order of events. As a result we cannot do a k-fold evaluation. We are going to implement a 80/20% train/test split:
 
 ```{r}
 ##only at beginning, then understand why !, NA, get rid in feature engineering!
 colSums(is.na.data.frame(data))   #repeating pattern of 224559 missing values!!! why?
 data <- drop_na(data)
 nrow(data)   # only 87181 left ...
-
 
 #sort by date in order to do chronological test/train split:
 data <- data %>% arrange(visit_date)
