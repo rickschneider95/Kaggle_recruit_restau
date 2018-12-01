@@ -6,20 +6,34 @@ library(RColorBrewer)
 
   
 ui <- fluidPage(
-    
-    titlePanel("Application Title"),
-    
-    navlistPanel(
-      "Header A",
-      tabPanel("Component 1"),
-    
-      tabPanel("Component 2"),
+    mainPanel(
       
-      "Header B",
-      tabPanel("Component 3"),
-      tabPanel("Component 4"),
-      "-----",
-      tabPanel("Component 5")
+      tabsetPanel(type='tabs',
+      
+      tabPanel("TEST 1",sidebarPanel("TITLE",
+                               selectInput("name","CHOICES ARE",choices=unique(prenoms$name),selected="Mathieu"),
+                               selectInput("color","Choose your favorite color bitch",choices=colors(),selected = "blue"),
+                               sliderInput( "year_period", "THE SLIDE YEAR SHOW", min = 1900, max = 2017, value =c(1900,2017), step = 1) ,
+                               checkboxGroupInput("sex", "WHICH SEX ARE U ON ?", choices=c("Boyss"="M","Girlss"="F")),
+                               actionButton("refresh",label = "Refresh")
+                               
+                               ),
+                        mainPanel(
+                               plotOutput("plot_popularity"),
+                               textOutput("Total"),
+                               DT::DTOutput("Table")
+                               )
+                        
+               ),
+      
+      tabPanel("TEST 2",sidebarPanel("TITLE",
+                                     selectInput("name","CHOICES ARE",choices=unique(prenoms$name),selected="Mathieu")
+                                    )
+              )
+      
+      
+    
+      )
     )
   )
 

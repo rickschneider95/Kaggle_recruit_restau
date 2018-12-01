@@ -87,8 +87,10 @@ paste prediction back to the dates + merge date and id
 xgbpred <- data.frame(xgbpred)
 
 p <- paste(id_visit_date$id,sep="_",id_visit_date$visit_date)
-xgbpred <- xgbpred %>% mutate(id = p)
+xgbpred <- xgbpred %>% mutate(id = p,
+                              y_true = TEST$target)
 View(xgbpred)
+
 
 ```
 Problem: we see the same date for the same id! +different predictions !
