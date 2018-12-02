@@ -27,7 +27,7 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 dataset <- read.csv("data/complete_data_final.csv")
 
 data_air <- dataset %>%
-  filter(str_detect(id, "^air")) %>% 
+  filter(str_detect(id, "^air")) %>%
   filter(visitors != "NA")
 
 summary(is.na(dataset))
@@ -38,30 +38,30 @@ date_info
 ```
 
 ```{r}
-data_air %>% 
-  filter(id == "air_034a3d5b40d5b1b1") %>% 
+data_air %>%
+  filter(id == "air_034a3d5b40d5b1b1") %>%
   mutate(genre_name = case_when(genre_name == "NA" ~ genre_name))
 
 
-d <- data_air %>% 
-  group_by(id) %>% 
+d <- data_air %>%
+  group_by(id) %>%
   mutate(index = is.na(genre_name))
 
 i <- is.na(d$genre_name)
 
-data_air %>% 
-  group_by(id) %>% 
+data_air %>%
+  group_by(id) %>%
   filter(id == "air_034a3d5b40d5b1b1")
 
 data_air %>% inner_join(data_air,by = "id") %>%   filter(id == "air_034a3d5b40d5b1b1")
 
 
 append_1 <- data_air %>%
-  group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>% 
+  group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>%
   summarise(visitors = sum(visitors))
 
-append_2 <- data_air %>% 
-  group_by(id,visit_date) %>% 
+append_2 <- data_air %>%
+  group_by(id,visit_date) %>%
   summarise(reserve_visitors = sum(reserve_visitors))
 
 append <- full_join(append_1,append_2, by = c("id","visit_date"))
@@ -77,7 +77,7 @@ dates_id <- append[,1:2]
 
 data_air %>% filter()
 
-data_air <- data_air %>% 
+data_air <- data_air %>%
   select(-c(visitors,reserve_visitors))
 
 dataset_full <- le_join(append,data_air,by = c("id","visit_date"))
@@ -97,17 +97,58 @@ sum(is.na(dataset$reserve_visitors))
 data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
 ```
 
+A SUPPRIMER @ALEXIS????
+# Change dataframe
+```{r}
+data <- data %>%
+  mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+         day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+         month_visit = month(dmy(visit_date)),   #extract visit month from date
+         month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+         year_visit = year(dmy(visit_date)), #extract visit year from date
+         year_reserve = year(dmy(visit_date)), #extract reserve year from date
+         latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+         latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors),
+         visit_time=as.factor(str_sub(as.character(visit_time), start = 0, end = 3)),
+        reserve_time = as.factor(str_sub(as.character(reserve_time), start = 0, end = 3)),
+        reserve_date = as.factor(str_sub(as.character(reserve_date), start = 6, end = 7)),
+        visit_date=as.factor(str_sub(as.character(visit_date), start = 6, end = 7))) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
+
+
+one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
+visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
+area_name = as.factor(substr(area_name, 0, 8))
+ne_h$day_of_the_week_visit <- as.factor(one_h$day_of_the_week_visit)
+one_h$day_of_the_week_reserve <- as.factor(one_h$day_of_the_week_visit)
+
+```
+
+# data change
+```{r}
+datal <- dataset %>%
+  mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
+         day_reserve = day(dmy(reserve_date)),  #extract reserve day from date
+         month_visit = month(dmy(visit_date)),   #extract visit month from date
+         month_reserve = month(dmy(reserve_date)), #extract reserve month from date
+         year_visit = year(dmy(visit_date)), #extract visit year from date
+         year_reserve = year(dmy(visit_date)), #extract reserve year from date
+         latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
+         latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
+```
+FIN DE SUPPRESSION POTENTIELLE????
+
+
 
 ## ONE HOT ENCODING ON FIRST BASE VARS
 
-This is the one hot encoding section (under form of functions) for the varaibles we start with in the complete dataset.
+This is the one hot encoding section (under form of functions) for the variables we start with in the complete dataset. Splitting them into functions was a conscious choice that gives us more flexibility as to what we want to one-hot encode, if we want to change the code at a later time.
 
 # One hot encoding for VISIT time:
 
 ```{r}
 vtime_transf <- function(data){
   one_h <- data
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) 
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) #extract the hour in the time: e.g: takes 19 out of 19:00:00
   one_h <- one_h %>% select(visit_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -119,7 +160,7 @@ vtime_transf <- function(data){
 ```{r}
 rtime_transf <- function(data){
   one_h <- data
-  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3))
+  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3)) #extract the hour in the time: e.g: takes 19 out of 19:00:00
   one_h <- one_h %>% select(reserve_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -131,7 +172,7 @@ rtime_transf <- function(data){
 ```{r}
 rmonth_transf <- function(data){
   one_h <- data
-  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7))
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7)) #extract the month number in the date (eg December is 12)
   one_h <- one_h %>% select(reserve_date)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -143,7 +184,7 @@ rmonth_transf <- function(data){
 ```{r}
 vmonth_transf <- function(data){
   one_h <- data
-  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7))
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7)) #extract the month number in the date (eg December is 12)
   one_h <- one_h %>% select(visit_date)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -182,10 +223,10 @@ This is the one hot encoder function for the original area name variable. I don'
 basic_area_transf <- function(data){
   one_h <- data
   one_h <- data %>%
-    select(area_name) %>% 
-    mutate(area_name = as.character(area_name)) %>% 
+    select(area_name) %>%
+    mutate(area_name = as.character(area_name)) %>%
     mutate(area_name = as.factor(case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
-                                 TRUE ~ area_name))) ## This is just an error in the data set 
+                                 TRUE ~ area_name))) ## This is just an error in the data set
   one_h <- one_hot(as.data.table(one_h))
   try <- data %>% cbind(one_h)
 }
@@ -246,25 +287,25 @@ lon_transf <- function(data){
 # One hot encoding for LUNCH/DINNER:
 
 ```{r}
-data_air %>% 
+data_air %>%
 dn_transf <- function(data){
-  one_h <- data %>% 
-    select(visit_time) %>% 
+  one_h <- data %>%
+    select(visit_time) %>%
     mutate(visit_time = as.integer(str_sub(as.character(visit_time),
                                   start = 0,
-                                  end = 3))) %>% 
+                                  end = 3))) %>%
     mutate(visit_time = as.factor(case_when(visit_time >= 4 & visit_time <= 16 ~ "noon",          # Lunch
                                                                           TRUE ~ "night")))       # Dinner
   one_h <- one_hot(as.data.table(one_h))
 
   append <- data %>%
-    select(id,visit_date) %>% 
+    select(id,visit_date) %>%
     cbind(one_h) %>%
-    group_by(id,visit_date) %>% 
+    group_by(id,visit_date) %>%
     mutate(var_1h_noon = sum(var_1h_noon),
-          var_1h_night = sum(var_1h_night)) %>% 
+          var_1h_night = sum(var_1h_night)) %>%
     distinct(id,visit_date,var_1h_noon,var_1h_night)
-  
+
   data <- data %>% cbind(append)
 }
 ```
@@ -278,8 +319,8 @@ There are many different levels for area names, although they all appartain to o
 area_transf <- function(data){
   one_h <- data
   one_h <- one_h %>%
-    select(area_name) %>% 
-    mutate(area_name = as.character(area_name)) %>% 
+    select(area_name) %>%
+    mutate(area_name = as.character(area_name)) %>%
     mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
                                                                        TRUE ~ area_name)) %>% # error in the data
     mutate(area_name = as.factor(substr(area_name, 0, 8)))
@@ -296,8 +337,8 @@ Difference is huge, we get 15 levels with the above function vs 130 from the bas
 latency_transf <- function(data){
   one_h <- data
   one_h <- one_h %>%
-    mutate(latency_days = as.integer(ifelse(is.na(reserve_date), 0, as.numeric(as.Date(visit_date) - as.Date(reserve_date))))) %>% 
-    select(latency_days) %>% 
+    mutate(latency_days = as.integer(ifelse(is.na(reserve_date), 0, as.numeric(as.Date(visit_date) - as.Date(reserve_date))))) %>%
+    select(latency_days) %>%
     mutate(latency_days = as.factor(case_when(latency_days >= 0 & latency_days <= 15 ~ "casual",
                                               latency_days > 15 & latency_days <= 45 ~ "fancy",
                                                                                 TRUE ~ "very fancy")))
@@ -344,7 +385,7 @@ try
 
 - replace reservation times by average diff in res/visit for each ID !!!
 
--group_by id,date and summarise -> get the total number of visits per day. (per noon,night?) 
+-group_by id,date and summarise -> get the total number of visits per day. (per noon,night?)
       => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately
 
 -We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0
@@ -379,7 +420,7 @@ nrow(trytry)
 
 Louis workspace:
 
-# LOOOUUUUUIIIISSSSS 
+# LOOOUUUUUIIIISSSSS
 ```{r}
 data <- data %>%
   mutate(day_visit = day(dmy(visit_date)), #extract visit day from date
