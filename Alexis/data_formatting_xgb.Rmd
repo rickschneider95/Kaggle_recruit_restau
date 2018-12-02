@@ -23,6 +23,10 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 
 ## loading space according to your preferences: (:o)<--<
 
+```{r}
+dataset <- read.csv("data/complete_data_final.csv")
+```
+
 # HPG :
 
 not usefull for now.
@@ -34,8 +38,6 @@ data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
 # AIR :
 
 ```{r}
-dataset <- read.csv("data/complete_data_final.csv")
-
 data_air <- dataset %>%
   filter(str_detect(id, "^air")) %>%
   filter(visitors != "NA") %>%
@@ -71,7 +73,9 @@ date_info <- read.csv("data/date_info.csv")
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
-data_air <- inner_join(data_air,date_info,by="visit_date") # CAREFULL, here it's an inner join, some days there were just no restaurants open :)
+data_air <- inner_join(data_air,date_info,by="visit_date") %>%
+  rename(day_of_the_week_visit = day_of_week) %>%
+  rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
 
 summary(is.na(data_air))
 ```
@@ -99,8 +103,9 @@ In the sample submission we have unique rows with an identifier and a given date
 
 ```{r}
 data_air <- data_air %>%
-  group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>%
-  summarise(visitors = sum(visitors))
+  group_by(id,visit_date,genre_name,latitude,longitude,area_name,day_of_the_week_visit,holiday_flg_visit) %>%
+  summarise(visitors = sum(visitors)) %>%
+  ungroup()
 
 summary(is.na(data_air))
 ```
@@ -249,7 +254,6 @@ vdayweek_transf <- function(data){
 ```
 
 # One hot encoding for LONGITUDE:
-DONT RUN
 
 ```{r}
 lat_transf <- function(data){
@@ -262,7 +266,6 @@ lat_transf <- function(data){
 ```
 
 # One hot encoding for LATITUDE:
-DONT RUN
 
 ```{r}
 lon_transf <- function(data){
@@ -273,6 +276,29 @@ lon_transf <- function(data){
   data <- data %>% cbind(one_h)
 }
 ```
+
+# One hot encoding for VISIT holiday flag:
+
+```{r}
+vholflg_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>% select(holiday_flg_visit)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for RESERVE holiday flag
+
+```{r}
+rholflg_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>% select(holiday_flg_reserve)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
 
 ## FEATURE ENGINEERING:
 
@@ -347,7 +373,7 @@ The idea behind this function is that costumers might be more encline to go to t
 
 ```{r}
 bme_vmonth_transf <- function(data){
-  one_h <- dataset
+  one_h <- data
   one_h$visit_date <- as.integer(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
   one_h <- one_h %>%
     select(visit_date) %>%
@@ -361,12 +387,11 @@ bme_vmonth_transf <- function(data){
 
 # one hot encoding for RESERVE start/end of the month :
 
-The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+same as above but for reservation date!
 
 ```{r}
 bme_rmonth_transf <- function(data){
-
-  one_h <- dataset
+  one_h <- data
   one_h$reserve_date <- as.integer(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
   one_h <- one_h %>%
     select(reserve_date) %>%
@@ -390,7 +415,10 @@ try <- vmonth_transf(try)
 try <- vyear_transf(try)
 try <- area_transf(try)
 try <- vdayweek_transf(try)
+try <- bme_vmonth_transf(try)
+try <- vholflg_transf(try)
 
+rm(try)
 
 try
 
@@ -465,17 +493,14 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
-try <- try[,-c(3:5)]
-try <- try[,-c(4:8)]
-final_try <- try[,-c(5)]
+try <- try[,-c(3:8)]
 
-write.csv(final_try, "data/data_1h_xgb.csv", row.names = FALSE)
+write.csv(try, "data/data_1h_xgb_improved.csv", row.names = FALSE)
 
-trytry <- read.csv("data/data_1h_xgb.csv")
-trytry
+trytry <- read.csv("data/data_1h_xgb_improved.csv")
 
-colSums(is.na.data.frame(trytry))
-nrow(trytry)
+n_occur <- data.frame(table(trytry$id,trytry$visit_date))
+n_occur[n_occur$Freq > 1,] #wierd
 ```
 =======
 
