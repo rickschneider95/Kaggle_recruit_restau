@@ -6,7 +6,9 @@ Authors@R: c(person("Augustin", "Baudoin", email = "augustin.baudoin@polytechniq
            person("Rick", "Schneider", email = "rick.schneider@polytechnique.edu", role = "aut"),
            person("Alexis", "Laks", email = "alexis.laks@polytechnique.edu", role = "aut"),
            person("Mathieu", "Deborne", email = "mathieu.deborne@polytechnique.edu", role = "aut"))
-Description: Use reservation and visitation data from Recruit Holding to predict the total number of visitors to a restaurant for future dates.This package contain all the necessary work to perform the prediction : exploratory data analysis, prediction model using xgboost and results.
+Description: Use reservation and restaurant visit data from Recruit Holding to predict the number of visitors
+to a restaurant for future dates. This package contains all the necessary work to perform the prediction : 
+exploratory data analysis, prediction model using xgboost and results.
 Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
