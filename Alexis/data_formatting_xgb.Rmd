@@ -21,7 +21,17 @@ library(caret)
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
 
 
-# loading space according to your preferences: (:o)<--<
+## loading space according to your preferences: (:o)<--<
+
+# HPG :
+
+not usefull for now.
+
+```{r}
+data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
+```
+
+# AIR :
 
 ```{r}
 dataset <- read.csv("data/complete_data_final.csv")
@@ -85,95 +95,54 @@ For now I'll go on assuming that the reserve info is useless and only construct 
 
 In the sample submission we have unique rows with an identifier and a given date. Here we often have several rows containing the same identifier and the same date but not the same number of visitors. This makes sense since you will have several different groups of costumers throughout the day. We want to regroup all the visits on a given date for a given identifier since this is what we're trying to predict! 
 
-# 
+# Grouping visits per day per id:
 
 ```{r}
-append_1 <- data_air %>%
+data_air <- data_air %>%
   group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>%
   summarise(visitors = sum(visitors))
 
-summary(is.na(append_1))
-```
-
-
-```{r}
-append_1 <- data_air %>%
-  group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>%
-  summarise(visitors = sum(visitors))
-
-append_2 <- data_air %>%
-  group_by(id,visit_date) %>%
-  summarise(reserve_visitors = sum(reserve_visitors))
-
-append_final <- full_join(append_1,append_2, by = c("id","visit_date"))
-
-date_infos <- data_air %>% 
-  select(visit_date,day_of_the_week_visit,holiday_flg_visit) %>% 
-  distinct(visit_date,day_of_the_week_visit,holiday_flg_visit)
-
-left_join(append,date_infos,by = "visit_date") %>% distinct(id,genre_name,latitude,longitude,area_name,visitors,reserve_visitors,visit_date,day_of_the_week_visit,holiday_flg_visit)
-
-
-
-summary(is.na(append))
-
-
-
-
-# dates_id <- append[,1:2]
-# 
-# data_air %>% filter()
-# 
-# data_air <- data_air %>%
-#   select(-c(visitors,reserve_visitors))
-# 
-# dataset_full <- le_join(append,data_air,by = c("id","visit_date"))
-# 
-# try <- data_air
-# try1 <- left_join(try,append_1, by = c("id","visit_date"))
-# try2 <- left_join(try1,append_2, by = c("id","visit_date"))
-# try3 <- left_join
-# try2  
-# 
-#   sum(is.na(append_2$reserve_visitors))
-# sum(is.na(data_air))
-# 
-# sum(is.na(dataset$reserve_visitors))
-try <- data_air %>% group_by(id) %>% fill(c(genre_name,area_name,latitude,longitude))
-
-# TESTS
-
-nrow(try)
-nrow(data_air)
-summary(is.na(try))
 summary(is.na(data_air))
-try %>% filter(id == "air_034a3d5b40d5b1b1")
-try <- try %>% select(-c(day_of_the_week_visit,holiday_flg_visit))
-
-# try <- try %>% group_by(visit_date) %>% fill(c(day_of_the_week_visit,holiday_flg_visit))
-date_info <- date_info %>% rename(visit_date = calendar_date)
-try2 <- full_join(try,date_info,by="visit_date")
-summary(is.na(try2))
-
-
-date_info
-levels(as.factor(try$visit_date))
-```
-
-```{r}
-data_hpg <- dataset %>% filter(str_detect(id, "^hpg"))
 ```
 
 ## ONE HOT ENCODING ON FIRST BASE VARS
 
 This is the one hot encoding section (under form of functions) for the variables we start with in the complete dataset. Splitting them into functions was a conscious choice that gives us more flexibility as to what we want to one-hot encode, if we want to change the code at a later time.
 
+# One hot encoding for VISIT day:
+
+Unoptimal, I'll create a better function below separating start of month to end of month ;) 
+
+```{r}
+vtime_transf <- function(data){
+  one_h <- data
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 9, end = 10)) 
+  one_h <- one_h %>% select(visit_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# One hot encoding for RESERVE day:
+
+Same as visit, there exists a better way to do it. Check the feature engineering section!
+
+```{r}
+vtime_transf <- function(data){
+  one_h <- data
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
+  one_h <- one_h %>% select(reserve_date)
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
 # One hot encoding for VISIT time:
 
 ```{r}
 vtime_transf <- function(data){
   one_h <- data
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) #extract the hour in the time: e.g: takes 19 out of 19:00:00
+  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3)) 
   one_h <- one_h %>% select(visit_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -185,7 +154,7 @@ vtime_transf <- function(data){
 ```{r}
 rtime_transf <- function(data){
   one_h <- data
-  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3)) #extract the hour in the time: e.g: takes 19 out of 19:00:00
+  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3)) 
   one_h <- one_h %>% select(reserve_time)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -197,7 +166,7 @@ rtime_transf <- function(data){
 ```{r}
 rmonth_transf <- function(data){
   one_h <- data
-  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7)) #extract the month number in the date (eg December is 12)
+  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7)) 
   one_h <- one_h %>% select(reserve_date)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -209,7 +178,7 @@ rmonth_transf <- function(data){
 ```{r}
 vmonth_transf <- function(data){
   one_h <- data
-  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7)) #extract the month number in the date (eg December is 12)
+  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7)) 
   one_h <- one_h %>% select(visit_date)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
@@ -372,6 +341,43 @@ latency_transf <- function(data){
 }
 ```
 
+# one hot encoding for VISIT start/end of the month :
+
+The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+
+```{r}
+bme_vmonth_transf <- function(data){
+  one_h <- dataset
+  one_h$visit_date <- as.integer(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
+  one_h <- one_h %>% 
+    select(visit_date) %>%
+    mutate(visit_date = as.factor(case_when(visit_date >= 0 & visit_date <= 12 ~ "beginning",
+                                           visit_date >= 13 & visit_date <= 22 ~ "middle",
+                                                                          TRUE ~ "end")))
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# one hot encoding for RESERVE start/end of the month :
+
+The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+
+```{r}
+bme_rmonth_transf <- function(data){
+  
+  one_h <- dataset
+  one_h$reserve_date <- as.integer(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
+  one_h <- one_h %>% 
+    select(reserve_date) %>%
+    mutate(reserve_date = as.factor(case_when(reserve_date >= 0 & reserve_date <= 12 ~ "beginning",
+                                           reserve_date >= 13 & reserve_date <= 22 ~ "middle",
+                                                                          TRUE ~ "end")))
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
 
 ## TRY CHUNK ( TRY MY CHUNK (:^<) )
 
@@ -379,20 +385,27 @@ this chunk is for you to test out the different one hot encoding functions. have
 
 ```{r}
 try <- data_air
-try <- rtime_transf(try)
-try <- vtime_transf(try)
-try <- rmonth_transf(try)
+
 try <- vmonth_transf(try)
-try <- ryear_transf(try)
 try <- vyear_transf(try)
 try <- area_transf(try)
-try <- dn_transf(try)
 try <- vdayweek_transf(try)
-try <- rdayweek_transf(try)
-try <- latency_transf(try)
 
 
 try
+
+# Transf functions on basic vars:
+
+# Transf functions on reserve vars (can't use for now):
+
+try <- rtime_transf(try)
+try <- vtime_transf(try)
+try <- rmonth_transf(try)
+try <- ryear_transf(try)
+try <- dn_transf(try)
+try <- rdayweek_transf(try)
+try <- latency_transf(try)
+
 
 # Obsolete bin :
 
@@ -437,6 +450,8 @@ trytry
 colSums(is.na.data.frame(trytry))
 nrow(trytry)
 ```
+
+
 
 
 Louis workspace:
@@ -487,3 +502,70 @@ datal <- dataset %>%
          latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 ```
 FIN DE SUPPRESSION POTENTIELLE????
+
+
+These are many different tries.. OBSOLETE BIN:
+
+```{r}
+append_1 <- data_air %>%
+  group_by(id,visit_date,genre_name,latitude,longitude,area_name) %>%
+  summarise(visitors = sum(visitors))
+
+append_2 <- data_air %>%
+  group_by(id,visit_date) %>%
+  summarise(reserve_visitors = sum(reserve_visitors))
+
+append_final <- full_join(append_1,append_2, by = c("id","visit_date"))
+
+date_infos <- data_air %>% 
+  select(visit_date,day_of_the_week_visit,holiday_flg_visit) %>% 
+  distinct(visit_date,day_of_the_week_visit,holiday_flg_visit)
+
+left_join(append,date_infos,by = "visit_date") %>% distinct(id,genre_name,latitude,longitude,area_name,visitors,reserve_visitors,visit_date,day_of_the_week_visit,holiday_flg_visit)
+
+
+
+summary(is.na(append))
+
+
+
+
+dates_id <- append[,1:2]
+
+data_air %>% filter()
+
+data_air <- data_air %>%
+  select(-c(visitors,reserve_visitors))
+
+dataset_full <- le_join(append,data_air,by = c("id","visit_date"))
+
+try <- data_air
+try1 <- left_join(try,append_1, by = c("id","visit_date"))
+try2 <- left_join(try1,append_2, by = c("id","visit_date"))
+try3 <- left_join
+try2
+
+  sum(is.na(append_2$reserve_visitors))
+sum(is.na(data_air))
+
+sum(is.na(dataset$reserve_visitors))
+try <- data_air %>% group_by(id) %>% fill(c(genre_name,area_name,latitude,longitude))
+
+# TESTS
+
+nrow(try)
+nrow(data_air)
+summary(is.na(try))
+summary(is.na(data_air))
+try %>% filter(id == "air_034a3d5b40d5b1b1")
+try <- try %>% select(-c(day_of_the_week_visit,holiday_flg_visit))
+
+# try <- try %>% group_by(visit_date) %>% fill(c(day_of_the_week_visit,holiday_flg_visit))
+date_info <- date_info %>% rename(visit_date = calendar_date)
+try2 <- full_join(try,date_info,by="visit_date")
+summary(is.na(try2))
+
+
+date_info
+levels(as.factor(try$visit_date))
+```
