@@ -1,0 +1,75 @@
+---
+title: "Data_formatting"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+```
+
+```{r}
+rm(list=ls())  
+df <- read.csv("data/complete_data.csv",encoding="UTF-8")
+head(df)
+```
+
+
+```{r}
+
+library(prenoms)
+prenoms <-prenoms
+
+
+```
+
+```{r}
+ dataset <- eventReactive(input$refresh,{
+    
+    prenoms_france %>%
+      filter(name == input$name, sex %in% input$sex) %>%
+      group_by(year, name) %>%
+      summarise(total = sum(n)) %>%
+      ungroup() %>%
+      complete(year = 1900:2017, name, fill = list(total = 0))
+    
+  })
+  
+  
+  library(prenoms)
+  library(tidyverse)
+  data(prenoms)
+  
+  draw_a_name <- function(nom,data) {
+   data %>% 
+      # replace_na(list(total = 0)) %>%
+      ggplot() +
+      aes(x = year, y = total) +
+      geom_line(col=input$color)+
+      coord_cartesian(xlim=input$year_period)
+  }
+  
+  general_overview <- function(df,time){
+    df %>%
+    group_by(time) %>%
+    summarise(total=sum(visitors)) %>%
+    ggplot()+
+    aes(x = year, y = total) +
+    geom_line(col=input$color)+
+  }
+```
+
+```{r}
+
+general_overview <- function(df,time){
+      df %>%
+      group_by(time) %>%
+      summarise(total=sum(visitors)) %>%
+      ggplot()+
+      aes(x =time, y = total) +
+      geom_line(col=input$color)
+}
+
+```
+
