@@ -61,15 +61,50 @@ prenoms <-prenoms
 ```
 
 ```{r}
-
+library(RColorBrewer)
 general_overview <- function(df,time){
+      quo_time <- enquo(time)
+      str_time <- quo_name(quo_time)
+      
       df %>%
-      group_by(time) %>%
+      filter(!is.na(!!quo_time)) %>% 
+      filter(!is.na(visitors)) %>% 
+      group_by(!!quo_time) %>%
+      summarise(total=sum(visitors)) %>% 
+      
+      ggplot(aes_string(x =str_time, y = "total",fill=str_time))+
+      geom_bar(stat='identity')+
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5),legend.position = "none")
+      
+}
+
+general_overview(df,day_of_the_week_visit)
+
+
+ df %>%
+      filter(!is.na(visit_time),!is.na(visitors)) %>% 
+      group_by(visit_time) %>%
       summarise(total=sum(visitors)) %>%
       ggplot()+
-      aes(x =time, y = total) +
-      geom_line(col=input$color)
-}
+      aes(x =visit_time, y = total) +
+      geom_point()
+
+
+
+ 
+ 
+```
+
+```{r}
+library(leaflet)
+
+leaflet(df %>% distinct(id, .keep_all = TRUE)) %>%
+  addTiles() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addMarkers(~longitude, ~latitude,
+             popup = ~id, label = ~genre_name,
+              clusterOptions = markerClusterOptions())
+
 
 ```
 
