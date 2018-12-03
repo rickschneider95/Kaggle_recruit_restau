@@ -347,10 +347,10 @@ vdayweek_transf <- function(data){
 # One hot encoding for LONGITUDE:
 
 ```{r}
-lat_transf <- function(data){
+lon_transf <- function(data){
   one_h <- data
-  one_h$latitude <- as.factor(one_h$latitude)
-  one_h <- one_h %>% select(latitude)
+  one_h$longitude <- as.factor(round(one_h$longitude,1))
+  one_h <- one_h %>% select(longitude)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
@@ -359,10 +359,10 @@ lat_transf <- function(data){
 # One hot encoding for LATITUDE:
 
 ```{r}
-lon_transf <- function(data){
+lat_transf <- function(data){
   one_h <- data
-  one_h$longitude <- as.factor(str_sub(as.character(one_h$longitude), start = 0, end = 4))
-  one_h <- one_h %>% select(longitude)
+  one_h$latitude <- as.factor(round(one_h$latitude,1))
+  one_h <- one_h %>% select(latitude)
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
@@ -563,8 +563,8 @@ try <- basic_area_transf(try)
 
 ## To debug bin:
 
-ttry <- lat_transf(try)
-ttry <- lon_transf(try)
+try <- lat_transf(try)
+try <- lon_transf(try)
 ```
 
 **NOTES**
