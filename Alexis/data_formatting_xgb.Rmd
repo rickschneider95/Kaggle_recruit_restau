@@ -23,11 +23,10 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 
 ## loading space according to your preferences: (:o)<--<
 
-
-
 # HPG :
 
 Do we really want to use the HPG info? We only have the reservations not the actual number of visits. The only way we could integrate them is to assume that for each reservation everyone showed up. 
+
 ```{r}
 ids <- read.csv("data/store_id_relation.csv")
 ids
@@ -162,7 +161,7 @@ data_air <- data_air %>%
   group_by(id,visit_date) %>%
   mutate(nb_res = sum(nb_res))
 
-levels(as.factor(ttry$nb_res)) # different nb of reservations in the data! note: info coming from visit data is already summed so it's normal to get only one reservation that's huge...
+levels(as.factor(data_air$nb_res)) # different nb of reservations in the data! note: info coming from visit data is already summed so it's normal to get only one reservation that's huge...
 ```
 
 ## Formatting for one hot encoding:
@@ -178,7 +177,7 @@ The XGB algo has to train on vars that exist in the sample submission, since in 
 
 We can then create more variables BUT ONLY from these vars that we are able to collect from the sample submission. So how are we supposed to use all the reserve info?
 
-For now I'll go on assuming that the reserve info is useless and only construct on varaibles that we can retrieve from the info in the sample submission. You will still find functions that can work with the reserve data but I won't be using them, at least for now.
+For now I'll go on assuming that the reserve info is useless and only construct on variables that we can retrieve from the info in the sample submission. You will still find functions that can work with the reserve data but I won't be using them, at least for now.
 
 In the sample submission we have unique rows with an identifier and a given date. Here we often have several rows containing the same identifier and the same date but not the same number of visitors. This makes sense since you will have several different groups of costumers throughout the day. We want to regroup all the visits on a given date for a given identifier since this is what we're trying to predict!
 
@@ -186,7 +185,7 @@ In the sample submission we have unique rows with an identifier and a given date
 
 ```{r}
 data_air <- data_air %>%
-  group_by(id,visit_date,genre_name,latitude,longitude,area_name,day_of_the_week_visit,holiday_flg_visit) %>%
+  group_by(id,visit_date,genre_name,latitude,longitude,area_name,day_of_the_week_visit,holiday_flg_visit,nb_res) %>%
   summarise(visitors = sum(visitors)) %>%
   ungroup()
 
@@ -195,6 +194,10 @@ n_occur[n_occur$Freq > 1,] #Problem with the original csv.
 
 summary(is.na(data_air))
 ```
+
+
+
+We will need to use the air_data (based only on date_info, air_visit_data, air_store_info) rather than data_air (using all datasets) until we find a solution for the time series improved prediction.
 
 ## ONE HOT ENCODING ON FIRST BASE VARS
 
@@ -402,7 +405,49 @@ genre_transf <- function(data){
 
 **Creating new variables and one-hot encoding them for xgb program**
 
-# One hot encoding for NUMBER OF RES:
+# Works for both
+
+## One hot encoding (Better version) AREA:
+
+There are many different levels for area names, although they all appartain to one particular city. I'll regroup observations appartaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encode on this smaller amount of levels.
+
+```{r}
+area_transf <- function(data){
+  one_h <- data
+  one_h <- one_h %>%
+    select(area_name) %>%
+    mutate(area_name = as.character(area_name)) %>%
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                                                                       TRUE ~ area_name)) %>% # error in the data
+    mutate(area_name = as.factor(substr(area_name, 0, 8)))
+  one_h <- one_hot(as.data.table(one_h))
+  try <- data %>% cbind(one_h)
+}
+```
+
+Difference is huge, we get 15 levels with the above function vs 130 from the basic one. TAKE THIS ONE PLEASE SENPAI
+
+## one hot encoding for VISIT start/end of the month :
+
+The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+
+```{r}
+bme_vmonth_transf <- function(data){
+  one_h <- data
+  one_h$visit_date <- as.integer(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
+  one_h <- one_h %>%
+    select(visit_date) %>%
+    mutate(visit_date = as.factor(case_when(visit_date >= 0 & visit_date <= 12 ~ "beginning",
+                                           visit_date >= 13 & visit_date <= 22 ~ "middle",
+                                                                          TRUE ~ "end")))
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+```
+
+# Works only for data_air (reservation infos)
+
+## One hot encoding for NUMBER OF RES:
 
 By counting the number of services for each date for each ID we can know how many reservations there were in a day. We can then also derive the average number of people per reservations:
 
@@ -425,27 +470,7 @@ dn_transf <- function(data){
 summary(is.na(data_air))
 ```
 
-# One hot encoding (Better version) AREA:
-
-There are many different levels for area names, although they all appartain to one particular city. I'll regroup observations appartaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encode on this smaller amount of levels.
-
-```{r}
-area_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>%
-    select(area_name) %>%
-    mutate(area_name = as.character(area_name)) %>%
-    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
-                                                                       TRUE ~ area_name)) %>% # error in the data
-    mutate(area_name = as.factor(substr(area_name, 0, 8)))
-  one_h <- one_hot(as.data.table(one_h))
-  try <- data %>% cbind(one_h)
-}
-```
-
-Difference is huge, we get 15 levels with the above function vs 130 from the basic one. TAKE THIS ONE PLEASE SENPAI
-
-# one hot encoding for LATENCY
+## one hot encoding for LATENCY
 
 ```{r}
 latency_transf <- function(data){
@@ -461,25 +486,7 @@ latency_transf <- function(data){
 }
 ```
 
-# one hot encoding for VISIT start/end of the month :
-
-The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
-
-```{r}
-bme_vmonth_transf <- function(data){
-  one_h <- data
-  one_h$visit_date <- as.integer(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
-  one_h <- one_h %>%
-    select(visit_date) %>%
-    mutate(visit_date = as.factor(case_when(visit_date >= 0 & visit_date <= 12 ~ "beginning",
-                                           visit_date >= 13 & visit_date <= 22 ~ "middle",
-                                                                          TRUE ~ "end")))
-  one_h <- one_hot(as.data.table(one_h))
-  data <- data %>% cbind(one_h)
-}
-```
-
-# one hot encoding for RESERVE start/end of the month :
+## one hot encoding for RESERVE start/end of the month :
 
 same as above but for reservation date!
 
@@ -499,28 +506,23 @@ bme_rmonth_transf <- function(data){
 
 # one hot encoding for nb visits/reservation
 
+Needs improvement, we get around 200 new columns from one hot encoding so we should create categories: 
+- small rest <= 20
+- small/medium > 20 <= 50
+- medium > 50 <= 90
+- medium/large >90 <= 150
+- large > 150 
+
+we can change according to preferences but here's the baseline of the function! (need to use case_when):
+
 ```{r}
-try <- data_air
-ttry <- try %>% mutate(nb_res = 1) %>% group_by(id,visit_date) %>% mutate(nb_res = sum(nb_res))
-tttry <- ttry %>%
-  group_by(id,visit_date,genre_name,latitude,longitude,area_name,day_of_the_week_visit,holiday_flg_visit,nb_res) %>%
-  summarise(visitors = sum(visitors)) %>%
-  ungroup()
-
-# Above is already done before!
-ttttry <- tttry %>% 
-  mutate(av_per_day = round(visitors/nb_res))
-
-# tests :
-
-summary(is.na(tttry))
-levels(as.factor(tttry$nb_res))
-levels(as.factor(ttttry$nb_res))
-levels(as.factor(ttttry$av_per_day))
-levels(as.factor(data_air$visitors))
-
-data_air %>% filter(visitors == "877")
-air_visit_data %>%  filter(visitors == "877")
+average_transf <- function(data){
+  one_h <- data %>% 
+    mutate(av_per_day = as.factor(round(visitors/nb_res))) %>% 
+    select(av_per_day) %>% 
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
 ```
 
 ## TRY CHUNK ( TRY MY CHUNK (:^<) )
@@ -528,7 +530,9 @@ air_visit_data %>%  filter(visitors == "877")
 this chunk is for you to test out the different one hot encoding functions. have fun.
 
 ```{r}
-try <- data_air
+try <- air_data
+
+# Transf functions on basic vars:
 
 try <- vmonth_transf(try)
 try <- vyear_transf(try)
@@ -539,8 +543,6 @@ try <- bme_vmonth_transf(try)
 try <- vholflg_transf(try)
 
 try
-
-# Transf functions on basic vars:
 
 # Transf functions on reserve vars (can't use for now):
 
@@ -559,8 +561,8 @@ try <- basic_area_transf(try)
 
 ## To debug bin:
 
-try <- lat_transf(try)
-try <- lon_transf(try)
+ttry <- lat_transf(try)
+ttry <- lon_transf(try)
 ```
 
 **NOTES**
@@ -626,17 +628,21 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
-try <- try[,-c(3:8)]
+try <- try[,-c(4:9)]
 
-write.csv(try, "data/data_1h_xgb_improved_1.csv", row.names = FALSE)
+write.csv(try, "data/data_1h_xgb_CORRECT.csv", row.names = FALSE)
 
-trytry <- read.csv("data/data_1h_xgb_improved_1.csv")
+trytry <- read.csv("data/data_1h_xgb_CORRECT.csv")
 
+# Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
-n_occur[n_occur$Freq > 1,] 
+n_occur[n_occur$Freq > 1,]  # No duplicates
+
+summary(is.na(trytry)) # No NA's
+
+trytry # we good fam
 ```
 
-Seems there is a small problem with the complete csv.
 
 
 
