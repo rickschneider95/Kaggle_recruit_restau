@@ -55,6 +55,8 @@ There are some minor NA problems with the data, just a slight problem with the c
 for each id we have information on area name, lon, lat, and genre which do not vary in time. We are missing these infos for some id's but for others we don't. Despite having info on some id's they still had NA's for these variables so we just needed to extend this info.
 
 ```{r}
+data_air %>% filter(id == "air_db80363d35f10926") %>% filter(visit_date == "2016-01-01") # wierd...
+
 data_air <- data_air %>%
   group_by(id) %>%
   fill(c(genre_name,area_name,latitude,longitude))
@@ -107,7 +109,12 @@ data_air <- data_air %>%
   summarise(visitors = sum(visitors)) %>%
   ungroup()
 
+n_occur <- data.frame(table(data_air$id,data_air$visit_date))
+n_occur[n_occur$Freq > 1,]
+
 summary(is.na(data_air))
+
+data_air %>% filter(id == "air_db80363d35f10926") %>% filter(visit_date == "2016-01-01")
 ```
 
 ## ONE HOT ENCODING ON FIRST BASE VARS
@@ -297,6 +304,12 @@ rholflg_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
+```
+
+# One hot encoding for GENRE :
+
+```{r}
+
 ```
 
 
@@ -500,10 +513,10 @@ write.csv(try, "data/data_1h_xgb_improved.csv", row.names = FALSE)
 trytry <- read.csv("data/data_1h_xgb_improved.csv")
 
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
-n_occur[n_occur$Freq > 1,] #wierd
+n_occur[n_occur$Freq > 1,] 
 ```
-=======
 
+Seems there is a small problem with the complete csv. 
 
 
 
