@@ -16,6 +16,7 @@ library(dplyr)
 library(stringr)
 library(lubridate)
 library(caret)
+library(purrr)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
@@ -119,6 +120,8 @@ dataset <- fread("data/complete_data.csv")
 library(data.table)
 ```
 
+# filtering for only air id's
+
 ```{r}
 data_air <- dataset %>%
   filter(str_detect(id, "^air")) %>%
@@ -219,11 +222,13 @@ This is the one hot encoding section (under form of functions) for the variables
 Unoptimal, I'll create a better function below separating start of month to end of month ;)
 
 ```{r}
-vtime_transf <- function(data){
-  one_h <- data
-  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
-  one_h <- one_h %>% select(visit_date)
-  one_h <- one_hot(as.data.table(one_h))
+vday_transf <- function(data){
+  one_h <- data %>%
+    select(visit_date) %>% 
+    map(str_sub, start = 9, end = 10) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -233,11 +238,13 @@ vtime_transf <- function(data){
 Same as visit, there exists a better way to do it. Check the feature engineering section!
 
 ```{r}
-vtime_transf <- function(data){
-  one_h <- data
-  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
-  one_h <- one_h %>% select(reserve_date)
-  one_h <- one_hot(as.data.table(one_h))
+rday_transf <- function(data){
+  one_h <- data %>%
+    select(reserve_date) %>% 
+    map(str_sub, start = 9, end = 10) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -246,10 +253,12 @@ vtime_transf <- function(data){
 
 ```{r}
 vtime_transf <- function(data){
-  one_h <- data
-  one_h$visit_time <- as.factor(str_sub(as.character(one_h$visit_time), start = 0, end = 3))
-  one_h <- one_h %>% select(visit_time)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(visit_time) %>% 
+    map(str_sub, start = 0, end = 3) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -258,10 +267,12 @@ vtime_transf <- function(data){
 
 ```{r}
 rtime_transf <- function(data){
-  one_h <- data
-  one_h$reserve_time <- as.factor(str_sub(as.character(one_h$reserve_time), start = 0, end = 3))
-  one_h <- one_h %>% select(reserve_time)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(reserve_time) %>% 
+    map(str_sub, start = 0, end = 3) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -270,10 +281,12 @@ rtime_transf <- function(data){
 
 ```{r}
 rmonth_transf <- function(data){
-  one_h <- data
-  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 6, end = 7))
-  one_h <- one_h %>% select(reserve_date)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(reserve_date) %>% 
+    map(str_sub, start = 6, end = 7) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -282,10 +295,12 @@ rmonth_transf <- function(data){
 
 ```{r}
 vmonth_transf <- function(data){
-  one_h <- data
-  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 6, end = 7))
-  one_h <- one_h %>% select(visit_date)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(visit_date) %>% 
+    map(str_sub, start = 6, end = 7) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -294,10 +309,12 @@ vmonth_transf <- function(data){
 
 ```{r}
 ryear_transf <- function(data){
-  one_h <- data
-  one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 1, end = 4))
-  one_h <- one_h %>% select(reserve_date)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(reserve_date) %>% 
+    map(str_sub, start = 1, end = 4) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -306,10 +323,12 @@ ryear_transf <- function(data){
 
 ```{r}
 vyear_transf <- function(data){
-  one_h <- data
-  one_h$visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 1, end = 4))
-  one_h <- one_h %>% select(visit_date)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(visit_date) %>% 
+    map(str_sub, start = 1, end = 4) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -320,13 +339,14 @@ This is the one hot encoder function for the original area name variable. I don'
 
 ```{r}
 basic_area_transf <- function(data){
-  one_h <- data
   one_h <- data %>%
     select(area_name) %>%
-    mutate(area_name = as.character(area_name)) %>%
-    mutate(area_name = as.factor(case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
-                                 TRUE ~ area_name))) ## This is just an error in the data set
-  one_h <- one_hot(as.data.table(one_h))
+    map(as.character) %>%
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                                 TRUE ~ area_name)) %>% ## This is just an error in the data set
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   try <- data %>% cbind(one_h)
 }
 ```
@@ -335,9 +355,10 @@ basic_area_transf <- function(data){
 
 ```{r}
 rdayweek_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>% select(day_of_the_week_visit)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(day_of_the_week_reserve) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -346,9 +367,10 @@ rdayweek_transf <- function(data){
 
 ```{r}
 vdayweek_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>% select(day_of_the_week_visit)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(day_of_the_week_visit) %>% # Already factor
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -356,11 +378,21 @@ vdayweek_transf <- function(data){
 # One hot encoding for LONGITUDE:
 
 ```{r}
+<<<<<<< HEAD
 lon_transf <- function(data){
   one_h <- data
   one_h$longitude <- as.factor(round(one_h$longitude,1))
   one_h <- one_h %>% select(longitude)
   one_h <- one_hot(as.data.table(one_h))
+=======
+lat_transf <- function(data){
+  one_h <- data %>%
+    select(longitude) %>%
+    map(round, digits = 1) %>%
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+>>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -368,11 +400,21 @@ lon_transf <- function(data){
 # One hot encoding for LATITUDE:
 
 ```{r}
+<<<<<<< HEAD
 lat_transf <- function(data){
   one_h <- data
   one_h$latitude <- as.factor(round(one_h$latitude,1))
   one_h <- one_h %>% select(latitude)
   one_h <- one_hot(as.data.table(one_h))
+=======
+lon_transf <- function(data){
+  one_h <- data %>%
+    select(latitude) %>%
+    map(round, digits = 1) %>%
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+>>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -381,9 +423,11 @@ lat_transf <- function(data){
 
 ```{r}
 vholflg_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>% select(holiday_flg_visit)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(holiday_flg_visit) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -392,9 +436,11 @@ vholflg_transf <- function(data){
 
 ```{r}
 rholflg_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>% select(holiday_flg_reserve)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(holiday_flg_reserve) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -405,9 +451,10 @@ We get a lot of different levels for genre which is normal, but from the eda of 
 
 ```{r}
 genre_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>% select(genre_name)
-  one_h <- one_hot(as.data.table(one_h))
+  one_h <- data %>%
+    select(genre_name) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
@@ -424,15 +471,16 @@ There are many different levels for area names, although they all appartain to o
 
 ```{r}
 area_transf <- function(data){
-  one_h <- data
-  one_h <- one_h %>%
+  one_h <- data %>%
     select(area_name) %>%
-    mutate(area_name = as.character(area_name)) %>%
+    mutate(area_name = as.character(area_name)) %>% 
     mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
                                                                        TRUE ~ area_name)) %>% # error in the data
-    mutate(area_name = as.factor(substr(area_name, 0, 8)))
-  one_h <- one_hot(as.data.table(one_h))
-  try <- data %>% cbind(one_h)
+    map(str_sub, start = 0, end = 8) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
 }
 ```
 
@@ -444,17 +492,136 @@ The idea behind this function is that costumers might be more encline to go to t
 
 ```{r}
 bme_vmonth_transf <- function(data){
-  one_h <- data
-  one_h$visit_date <- as.integer(str_sub(as.character(one_h$visit_date), start = 9, end = 10))
-  one_h <- one_h %>%
+  one_h <- data %>%
     select(visit_date) %>%
+    mutate(visit_date = as.character(str_sub(visit_date, start = 9, end = 10))) %>% 
     mutate(visit_date = as.factor(case_when(visit_date >= 0 & visit_date <= 12 ~ "beginning",
                                            visit_date >= 13 & visit_date <= 22 ~ "middle",
-                                                                          TRUE ~ "end")))
-  one_h <- one_hot(as.data.table(one_h))
+                                                                          TRUE ~ "end"))) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
 ```
+
+## one hot encoding for regrouped GENRE :
+
+```{r}
+genre_gr_transf <- function(data){
+  one_h <- data %>% 
+    select(genre_name) %>% 
+    mutate(genre_name = case_when(genre_name == "Izakaya" |
+                                    genre_name == "Okonomiyaki/Monja/Teppanyaki" |
+                                      genre_name == "Japanese food in general" |
+                                        genre_name == "Japanese cuisine/Kaiseki" ~ "Japanese food",
+                                  genre_name == "Italian/French" |
+                                    genre_name == "Italian" ~ "Western food",
+                                  genre_name == "Creative cuisine" |
+                                    genre_name == "Creative Japanese food" ~ "Creation",
+                                  genre_name == "Karaoke" |
+                                    genre_name == "Party" |
+                                      genre_name == "Karaoke/Party" ~ "Amusement bar",
+                                  genre_name == "Asian" ~ "Yakiniku/Korean food",
+                                  genre_name == "Cafe/Sweets" ~ "Cafe",
+                                  genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
+                                  TRUE ~ as.character(genre_name))) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot) 
+    data <- data %>% cbind(one_h)
+} 
+
+test %>% group_by(genre_name) %>% summarise(total = n()) # Checks to give insight for re-arrangement.
+```
+
+## one hot encoding for bar/restaurant separation:
+
+```{r}
+barrest_transf <- function(data){
+  one_h <- data %>% 
+    select(genre_name) %>% 
+    mutate(genre_name = case_when(genre_name == "Asian" |
+                                    genre_name == "Okonomiyaki/Monja/Teppanyaki" |
+                                      genre_name == "Japanese food" |
+                                        genre_name == "Western food" |
+                                          genre_name == "Italian/French" |
+                                            genre_name == "International cuisine" |
+                                              genre_name == "Yakiniku/Korean food" |
+                                                genre_name == "Izakaya" |
+                                                  genre_name == "Creative cuisine" ~ "Restaurant",
+                                                genre_name == "Dining bar" |
+                                                  genre_name == "Bar/Cocktail" |
+                                                    genre_name == "Karaoke/Party" |
+                                                       genre_name == "Cafe/Sweets" ~ "Bar",
+                                                                              TRUE ~ "Else")) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot) 
+    data <- data %>% cbind(one_h)
+} 
+```
+
+## One hot encoding for golden week:
+
+28th of April to 6th of may
+
+```{r}
+goldw_transf <- function(data){
+  one_h <- data %>% 
+    mutate(visit_date = ymd(visit_date)) %>% 
+    mutate(goldenweek = case_when(visit_date > ymd("20160428") & visit_date < ymd("20160507") ~ 1,
+                                  visit_date > ymd("20170428") & visit_date < ymd("20170507") ~ 1,
+                                                                                         TRUE ~ 0)) %>% 
+    select(goldenweek) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+## One hot encoding for holiday days of the golden week
+
+29th of April, 3rd, 4th and 5th of May 
+
+```{r}
+goldd_transf <- function(data){
+  one_h <- data %>% 
+    mutate(visit_date = ymd(visit_date)) %>% 
+    mutate(goldendays = case_when(visit_date == ymd("20160429") | 
+                                    visit_date == ymd("20160503") | 
+                                      visit_date == ymd("20160504") | 
+                                        visit_date == ymd("20160505") |
+                                  visit_date == ymd("20170429") |
+                                    visit_date == ymd("20170503") |
+                                      visit_date == ymd("20170504") |
+                                        visit_date == ymd("20170505") ~ 1,
+                                                                 TRUE ~ 0)) %>% 
+    select(goldendays) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+## One hot encoding for WEEKEND :
+
+```{r}
+wknd_transf <- function(data){
+  one_h <- data %>% 
+    mutate(wknd = case_when(day_of_the_week_visit == "Friday" |
+                            day_of_the_week_visit == "Saturday" |
+                            day_of_the_week_visit == "Sunday" ~ "weekend",
+                                                         TRUE ~ "weekday")) %>% 
+    select(wknd) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
 
 # Works only for data_air (reservation infos)
 
@@ -464,21 +631,18 @@ By counting the number of services for each date for each ID we can know how man
 
 ```{r}
 dn_transf <- function(data){
-    n <- nrow(dataset)
-    counts <- rep(1,n)
-    counts <- counts %>% cbind(dataset)
-    counts %>% group_by(visit_date,id) %>% mutate(. = sum(.))
-    dataset %>% group_by()
-    mutate(visit_hour = as.integer(str_sub(as.character(visit_time),
+  one_h <- data %>% 
+    select(visit_time) %>% 
+    mutate(visit_time = as.integer(str_sub(as.character(visit_time),
                                   start = 0,
                                   end = 3))) %>%
-    mutate(visit_hour = as.factor(case_when(visit_time >= 4 & visit_time <= 16 ~ "noon",          # Lunch
-                                                                          TRUE ~ "night")))       # Dinner
-  one_h <- one_hot(as.data.table(one_h))
+    mutate(visit_time = case_when(visit_time >= 4 & visit_time <= 16 ~ "noon",          # Lunch
+                                                                TRUE ~ "night")) %>%    # Dinner
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
   data <- data %>% cbind(one_h)
 }
-
-summary(is.na(data_air))
 ```
 
 ## one hot encoding for LATENCY
@@ -529,10 +693,19 @@ we can change according to preferences but here's the baseline of the function! 
 ```{r}
 names(complete_data)
 average_transf <- function(data){
+<<<<<<< HEAD
   one_h <- data %>%
     mutate(av_per_day = as.factor(round(visitors/nb_res))) %>%
     select(av_per_day) %>%
   one_h <- one_hot(as.data.table(one_h))
+=======
+  one_h <- data %>% 
+    mutate(av_per_day = round(visitors/nb_res)) %>% 
+    select(av_per_day) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+>>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 
@@ -551,20 +724,28 @@ bme_rmonth_transf <- function(data){
 
 ## TRY CHUNK ( TRY MY CHUNK (:^<) )
 
-this chunk is for you to test out the different one hot encoding functions. have fun.
+this chunk is for you to test out the different one hot encoding functions. have fun. (these are actually all the functions that will go in the package!!)
 
 ```{r}
-try <- air_data
+try <- air_data 
 
 # Transf functions on basic vars:
 
 try <- vmonth_transf(try)
 try <- vyear_transf(try)
 try <- area_transf(try)
-try <- genre_transf(try)
+try <- genre_gr_transf(try)
 try <- vdayweek_transf(try)
 try <- bme_vmonth_transf(try)
 try <- vholflg_transf(try)
+try <- lat_transf(try)
+try <- lon_transf(try)
+try <- goldd_transf(try)
+try <- goldw_transf(try)
+try <- barrest_transf(try)
+try <- wknd_transf(try)
+
+
 
 try
 
@@ -585,24 +766,33 @@ try <- basic_area_transf(try)
 
 ## To debug bin:
 
+<<<<<<< HEAD
 try <- lat_transf(try)
 try <- lon_transf(try)
+=======
+>>>>>>> Feature-engineering
 ```
 
 **NOTES**
 
-- Need to one hot code genres!
+- Need to one hot code genres! *SOLVED*
 
-- replace reservation times by average diff in res/visit for each ID !!!
+- replace reservation times by average diff in res/visit for each ID !!! *SOLVED*
 
 -group_by id,date and summarise -> get the total number of visits per day. (per noon,night?)
-      => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately
+      => solution: seperate data set in visits for noon/ visits for ngiht and run xgb on each separately NO -- *SOLVED*
 
--We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0
+-We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0 *SOLVED* 
 
+<<<<<<< HEAD
 - genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe.
 
 WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission.
+=======
+- genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe. *SOLVED*
+
+WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission. *SOLVED*
+>>>>>>> Feature-engineering
 
 ```{r}
 data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(total))
@@ -617,6 +807,7 @@ data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(to
  -> Cafe/Sweets can go with Cafe
  -> Steak/Hamburger/Curry can go with Grilled meat
  -> Bar/Cocktail with amusement bar??
+<<<<<<< HEAD
 
  Here is the code to transform it:
 
@@ -643,6 +834,12 @@ regroup <- function(data){
 
 
 - We have NA's for day of the week reserve and day of the week visit:
+=======
+ 
+LOOK AT genre_gr_transf :))
+
+- We have NA's for day of the week reserve and day of the week visit: *SOLVED*
+>>>>>>> Feature-engineering
 
 ```{r}
 sum(is.na(data_air$day_of_the_week_reserve))
@@ -654,9 +851,11 @@ sum(is.na(data$day_of_the_week_visit))
 ```{r}
 try <- try[,-c(4:9)]
 
-write.csv(try, "data/data_1h_xgb_CORRECT.csv", row.names = FALSE)
 
-trytry <- read.csv("data/data_1h_xgb_CORRECT.csv")
+#CHANFE LAST NUMBER EVERY NEW VERSION:
+write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
+
+trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
@@ -786,3 +985,30 @@ summary(is.na(try2))
 date_info
 levels(as.factor(try$visit_date))
 ```
+
+
+
+
+
+# IMAGINATION LAND
+
+this where you come to rest your eyes and think of what crazy variables you shall create from this anorexic dataset.. (microdosing not allowed ;) )
+
+```{r}
+air_data
+```
+
+-> seperate Bars from Restaurants ? *DONE*
+-> select certain days/months to be more important? golden week !! *DONE*
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
+
+
+
+
+
+
+
+
+
