@@ -70,12 +70,7 @@ sol2 <- sol2 %>%
 
 ##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 ```{r}
-<<<<<<< HEAD
 complete_data <- fread("./data/complete_data.csv")
-names(complete_data)
-=======
-
->>>>>>> Feature-engineering
 ```
 
 # AIR :
@@ -384,25 +379,13 @@ vdayweek_transf <- function(data){
 # One hot encoding for LONGITUDE:
 
 ```{r}
-<<<<<<< HEAD
-<<<<<<< HEAD
 lon_transf <- function(data){
-  one_h <- data
-  one_h$longitude <- as.factor(round(one_h$longitude,1))
-  one_h <- one_h %>% select(longitude)
-  one_h <- one_hot(as.data.table(one_h))
-=======
-lat_transf <- function(data){
-=======
-lon_transf <- function(data){
->>>>>>> Feature-engineering
   one_h <- data %>%
     select(longitude) %>%
     map(round, digits = 1) %>%
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
->>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -410,25 +393,13 @@ lon_transf <- function(data){
 # One hot encoding for LATITUDE:
 
 ```{r}
-<<<<<<< HEAD
-<<<<<<< HEAD
 lat_transf <- function(data){
-  one_h <- data
-  one_h$latitude <- as.factor(round(one_h$latitude,1))
-  one_h <- one_h %>% select(latitude)
-  one_h <- one_hot(as.data.table(one_h))
-=======
-lon_transf <- function(data){
-=======
-lat_transf <- function(data){
->>>>>>> Feature-engineering
   one_h <- data %>%
     select(latitude) %>%
     map(round, digits = 1) %>%
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
->>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -759,19 +730,12 @@ we can change according to preferences but here's the baseline of the function! 
 ```{r}
 names(complete_data)
 average_transf <- function(data){
-<<<<<<< HEAD
-  one_h <- data %>%
-    mutate(av_per_day = as.factor(round(visitors/nb_res))) %>%
-    select(av_per_day) %>%
-  one_h <- one_hot(as.data.table(one_h))
-=======
   one_h <- data %>% 
     mutate(av_per_day = round(visitors/nb_res)) %>% 
     select(av_per_day) %>% 
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
->>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 
@@ -831,15 +795,6 @@ try <- latency_transf(try)
 try <- basic_area_transf(try)
 
 ## To debug bin:
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-try <- lat_transf(try)
-try <- lon_transf(try)
-=======
->>>>>>> Feature-engineering
-=======
->>>>>>> Feature-engineering
 ```
 
 **NOTES**
@@ -853,15 +808,9 @@ try <- lon_transf(try)
 
 -We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0 *SOLVED* 
 
-<<<<<<< HEAD
-- genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe.
-
-WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission.
-=======
 - genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe. *SOLVED*
 
 WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission. *SOLVED*
->>>>>>> Feature-engineering
 
 ```{r}
 data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(total))
@@ -876,10 +825,6 @@ data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(to
  -> Cafe/Sweets can go with Cafe
  -> Steak/Hamburger/Curry can go with Grilled meat
  -> Bar/Cocktail with amusement bar??
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Feature-engineering
 
  Here is the code to transform it:
 
@@ -900,22 +845,13 @@ regroup <- function(data){
                                   genre_name == "Asian" ~ "Yakiniku/Korean food",
                                   genre_name == "Cafe/Sweets" ~ "Cafe",
                                   genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
-<<<<<<< HEAD
-                                  TRUE ~ .))
-} ## NEED TO FIX
-```
-
-
-- We have NA's for day of the week reserve and day of the week visit:
-=======
- 
-=======
                                   TRUE ~ as.character(genre_name)))
 } 
 ```
 
 
->>>>>>> Feature-engineering
+- We have NA's for day of the week reserve and day of the week visit:
+
 LOOK AT genre_gr_transf :))
 
 - We have NA's for day of the week reserve and day of the week visit: *SOLVED*
@@ -1082,7 +1018,7 @@ air_data
 -> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE*
 -> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
--> get day of the year 1 to 365 for 2016 and for 2017 lubridate 
+-> get day of the year 1 to 365 for 2016 and for 2017 lubridate *DONE*
 -> weak of the year 
 
 
