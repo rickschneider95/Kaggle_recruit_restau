@@ -1,0 +1,9 @@
+* installing *source* package ‘recruitjap’ ...
+** R
+** byte-compile and prepare package for lazy loading
+** help
+No man pages found in package  ‘recruitjap’ 
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+* DONE (recruitjap)
