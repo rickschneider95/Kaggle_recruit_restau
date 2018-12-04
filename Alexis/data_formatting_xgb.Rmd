@@ -638,7 +638,6 @@ nth_day_trasnf <- function(data){
   data <- data %>%
     left_join(dates, by = "visit_date") 
 }
-try <- nth_day_trasnf(try)
 ```
 
 
@@ -737,13 +736,14 @@ try <- genre_gr_transf(try)
 try <- vdayweek_transf(try)
 try <- bme_vmonth_transf(try)
 try <- vholflg_transf(try)
-try <- lat_transf(try)
-try <- lon_transf(try)
+# try <- lat_transf(try)
+# try <- lon_transf(try)
 try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
 try <- wealth_transf(try)
+try <- nth_day_trasnf(try)
 
 try
 
@@ -813,8 +813,8 @@ regroup <- function(data){
                                   genre_name == "Asian" ~ "Yakiniku/Korean food",
                                   genre_name == "Cafe/Sweets" ~ "Cafe",
                                   genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
-                                  TRUE ~ .))
-} ## NEED TO FIX
+                                  TRUE ~ as.character(genre_name)))
+} 
 ```
 
 
@@ -830,13 +830,12 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
-try <- try[,-c(4:9)]
+try <- try[,-c(4:8)]
 
+#CHANGE LAST NUMBER EVERY NEW VERSION:
+write.csv(try, "data/data_1h_xgb_CORRECT_6.csv", row.names = FALSE)
 
-#CHANFE LAST NUMBER EVERY NEW VERSION:
-write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
-
-trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
+trytry <- read.csv("data/data_1h_xgb_CORRECT_6.csv")
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
