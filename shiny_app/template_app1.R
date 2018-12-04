@@ -4,13 +4,22 @@ library(shinyTime)
 library(timeDate)
 library(leaflet)
 
-df <- read.csv("data/complete_data.csv",encoding="UTF-8") 
+df <- read.csv("data/air_data.csv",encoding="UTF-8") 
+## if visit_time = NA pour ne pas avoir de doublon
+## ordre des factors plot
+
+df <- df %>% 
+  mutate(visit_month= months(as.Date(visit_date)))
 
 
 ui <- fluidPage(
     mainPanel(
       
       tabsetPanel(type='tabs',
+      
+      tabPanel("Intro",mainPanel()
+        
+               ),
       
       tabPanel("time overview ",sidebarPanel("TITLE",
                                #selectInput("name","CHOICES ARE",choices=unique(prenoms$name),selected="Mathieu"),
@@ -52,7 +61,7 @@ ui <- fluidPage(
                                
                                ),
                         mainPanel(
-                               plotOutput("plot_time"),
+                               plotOutput("plot_time",width = "180%",height = "600px"),
                                textOutput("number_visitors_period")
                               # DT::DTOutput("Table")
                                )
@@ -96,7 +105,7 @@ ui <- fluidPage(
                                      actionButton("refresh2",label = "Refresh bis")
                                     ),
                  mainPanel(
-                 plotOutput("plot_time2"),
+                 plotOutput("plot_time2",width = "180%",height = "600px"),
                  textOutput("number_visitors_period2")
                  # DT::DTOutput("Table")
                )
@@ -109,6 +118,37 @@ ui <- fluidPage(
                         )
         
         
+              ),
+      tabPanel("Analyse by Genre/region",
+               sidebarPanel("TITLE",radioButtons("time4", "WHICH TIME ARE U ON ?", choices=c("by day in the year"="visit_date",
+                                                                                             "by month"="visit_month")
+                                                ),
+                                    conditionalPanel(condition = "input.time4 =='visit_date'",
+                                             dateRangeInput("daterange4", "Date range:",
+                                                            start = as.Date('2016-01-01'),
+                                                            end = as.Date('2017-05-31')
+                                                    )
+                                                ),
+                                    conditionalPanel(condition = "input.time4 =='visit_month'",
+                                                 checkboxGroupInput("month4", 
+                                                                    "Select month", 
+                                                                    choices = unique(df$visit_month),
+                                                                    selected=unique(df$visit_month)
+                                                                    )
+                                                 ),
+                                    checkboxGroupInput("Area4","select area",choices=unique(df$area_name)),
+                                    checkboxGroupInput("Genre4","select genre",choices=unique(df$genre_name)),
+                                    actionButton("refresh4",label = "Refresh bis")
+                 
+                          ),
+               mainPanel(
+                         plotOutput("plot_time4",width = "180%",height = "600px"),
+                         textOutput("number_visitors_period4")
+                        )
+        
+              ),
+      tabPanel("Prediction",mainPanel()
+               
               )
       
       
@@ -127,13 +167,13 @@ server <- function(input, output) {
 
   
   
-  count <- function (df,time){
+  count <- function (df,time,daterange){
     quo_time <- rlang::sym(time)
     
     if(time=='visit_date'){
       df$visit_date =  as.Date(df$visit_date, format = "%Y-%m-%d")
       df <- df %>% 
-        filter(!!quo_time >= input$daterange[1] & !!quo_time <= input$daterange[2]) %>%  
+        filter(!!quo_time >= daterange[1] & !!quo_time <= daterange[2]) %>%  
         mutate(visit_date=as.factor(visit_date))
     }
     if(time=='visit_time'){
@@ -160,7 +200,7 @@ server <- function(input, output) {
   
   
 
-  general_overview <- function(df,time){ 
+  general_overview <- function(df,time,daterange){ 
     quo_time <- rlang::sym(time)
     str_time <- quo_name(quo_time)
     
@@ -168,7 +208,7 @@ server <- function(input, output) {
     if(time=='visit_date'){
       df$visit_date =  as.Date(df$visit_date, format = "%Y-%m-%d")
       df <- df %>% 
-        filter(!!quo_time >= input$daterange[1] & !!quo_time <= input$daterange[2]) %>%  
+        filter(!!quo_time >= daterange[1] & !!quo_time <= daterange[2]) %>%  
         mutate(visit_date=as.factor(visit_date))
     }
     if(time=='visit_time'){
@@ -197,20 +237,46 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5),legend.position = "none")
     }
   
-  personal_overview <- function(df,time){ 
+  personal_overview <- function(df,time,daterange){ 
     df <- df %>%  filter(id == input$id)
-    general_overview(df,time)
+    general_overview(df,time,daterange)
   }
   
-  personal_count <- function (df,time){
+  personal_count <- function (df,time,daterange){
     df <- df %>%  filter(id == input$id)
-    count(df,time)
+    count(df,time,daterange)
+  }
+  area_genre_overview <- function(df,time,daterange){
+    df <- df %>%
+      filter(genre_name %in% input$Genre4) %>% 
+      filter(area_name %in% input$Area4)
+    
+    if(time=='visit_month'){
+      df <- df %>% 
+        filter(visit_month %in% input$month4)
+    }
+    
+    general_overview(df,time,daterange)
+      
+  }
+  area_genre_count <-function(df,time,daterange){
+    df <- df %>%
+      filter(genre_name %in% input$Genre4) %>% 
+      filter(area_name %in% input$Area4)
+    
+    if(time=='visit_month'){
+      df <- df %>% 
+        filter(visit_month %in% input$month4)
+    }
+      count(df,time,daterange)
   }
   
-   pp1 <- eventReactive(input$refresh,{general_overview(df,input$time)})
-   pp2 <- eventReactive(input$refresh,{count(df,input$time)})
-   pp12 <- eventReactive(input$refresh2,{personal_overview(df,input$time2)})
-   pp22 <- eventReactive(input$refresh2,{personal_count(df,input$time2)})
+   pp1 <- eventReactive(input$refresh,{general_overview(df,input$time,input$daterange)})
+   pp2 <- eventReactive(input$refresh,{count(df,input$time,input$daterange)})
+   pp12 <- eventReactive(input$refresh2,{personal_overview(df,input$time2,input$daterange2)})
+   pp22 <- eventReactive(input$refresh2,{personal_count(df,input$time2,input$daterange2)})
+   pp14 <- eventReactive(input$refresh4,{area_genre_overview(df,input$time4,input$daterange4)})
+   pp24 <- eventReactive(input$refresh4,{area_genre_count(df,input$time4,input$daterange4)})
    
    output$plot_time <- renderPlot({
      pp1()
@@ -235,6 +301,14 @@ server <- function(input, output) {
        addMarkers(~longitude, ~latitude,
                   popup = ~id, label = ~genre_name,
                   clusterOptions = markerClusterOptions())
+   })
+   
+   output$plot_time4 <- renderPlot({
+     pp14()
+   })
+   
+   output$number_visitors_period4 <- renderText({ 
+     glue::glue("They are {pp24()} visitors represented overall on this graph ")
    })
 }
 
