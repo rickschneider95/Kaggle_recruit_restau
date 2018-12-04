@@ -73,41 +73,41 @@ sol2 <- sol2 %>%
 complete_data <- fread("./data/complete_data.csv")
 ```
 
-# AIR :
+to deleeeeteeeee:::::
+<!-- # AIR : -->
 
-While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+<!-- While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !) -->
 
-## Without reserve info :
+<!-- ## Without reserve info : -->
 
-### Adding store info
+<!-- ### Adding store info -->
 
-```{r}
-air_store_info <- fread("data/air_store_info.csv")
-air_visit_data <- fread("data/air_visit_data.csv")
-air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
-  rename(id = air_store_id) %>%
-  rename(genre_name = air_genre_name) %>%
-  rename(area_name = air_area_name)
+<!-- ```{r} -->
+<!-- air_store_info <- fread("data/air_store_info.csv") -->
+<!-- air_visit_data <- fread("data/air_visit_data.csv") -->
+<!-- air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>% -->
+<!--   rename(id = air_store_id) %>% -->
+<!--   rename(genre_name = air_genre_name) %>% -->
+<!--   rename(area_name = air_area_name) -->
 
-summary(is.na(air_data)) # No NA's.
-```
+<!-- summary(is.na(air_data)) # No NA's. -->
+<!-- ``` -->
 
-### Adding date info
+<!-- ### Adding date info -->
 
-```{r}
-date_info <- fread("data/date_info.csv")
-date_info <- date_info %>%
-  rename(visit_date = calendar_date)
+<!-- ```{r} -->
+<!-- date_info <- fread("data/date_info.csv") -->
+<!-- date_info <- date_info %>% -->
+<!--   rename(visit_date = calendar_date) -->
 
-air_data <- left_join(air_data,date_info,by="visit_date") %>%
-  rename(day_of_the_week_visit = day_of_week) %>%
-  rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
+<!-- air_data <- left_join(air_data,date_info,by="visit_date") %>% -->
+<!--   rename(day_of_the_week_visit = day_of_week) %>% -->
+<!--   rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open -->
 
-summary(is.na(air_data)) # No NA's.
-names(air_data)
+<!-- summary(is.na(air_data)) # No NA's. -->
+<!-- names(air_data) -->
 
-```
-
+<!-- ``` -->
 
 ### total visits per date per id:
 
