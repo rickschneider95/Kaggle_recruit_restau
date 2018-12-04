@@ -1,0 +1,6 @@
+usethis::use_build_ignore("devtools_history.R")
+usethis::use_package("dplyr")
+usethis::use_package("purrr")
+usethis::use_package("mltools")
+usethis::use_package("data.table")
+

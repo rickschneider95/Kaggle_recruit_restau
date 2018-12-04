@@ -52,12 +52,9 @@ getColor <- function(rest) {
     }
     })
 }
-unique(air_store$air_genre_name)
-
-'red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpurple', 'cadetblue'
 
 getColor(air_store)
-
+library(leaflet)
 icons <- awesomeIcons(
   icon = 'ios-close',
   iconColor = 'black',

@@ -1,0 +1,57 @@
+---
+title: "Transforming basic data with recruitjap"
+author: "Alexis Laks"
+date: "04/12/2018"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This package conatins a set of functions to one hot encode categorical variables that are in our complete dataset to feed to the XGBoost algorithm for prediction. 
+
+You will find one hot encoding functions for the basic vars that are given in the datasets from Kaggle that we joined into one complete dataset (air_data). In this data you will find : 
+
+- id : Identifier for each restaurant in our data
+- visit_date : All dates were each restaurant had visitors
+- genre_name : The style of the restaurant (it can be japanese food, a bar, a karaoke ...)
+- area_name : It's approximate location (generally located in one of the prefectures of a big city in Japan)
+- holiday_flg_visit : variable taking value one when visit_date is a holiday in Japan 
+- day_of_the_week_visit : Indicates to which day of the week corresponds the date (ex: Sunday, Tuesday, ...)
+- longitude : approximate longitude coordinates for each restaurant
+- latitude : approximate latitude coordinates for each restaurant
+
+There will also be a set of functions that can be used on more data we have regarding reservations, reservation times, data from another reservation platform (HPG) although these data are useless for our Kaggle submission. This is due to the fact that from the sample submission we have only 3 variables : 
+ - id : an id for which to forecast
+ - visit_date : a date for which to forecast
+ - visitors : the variable to predict
+ 
+From these 3 variables unfortunately we can only retrieve the varaibles mentionned above which correspond to the joining of 3 datasets imported from kaggle (air_visit_data.csv, air_store_info.csv, date_info.csv).
+This is why all these functions are directly created for our complete data, all the reserve functions that do not work on this complete dataset are listed as such and are kept for future improvements if the reservation data for the sample submission is made available. 
+
+You will find this vignette organised as follows :
+
+1. Functions to one hot encode base categorical variables for air_data
+2. Functions to one hot encode other categorical variables for which data is partially unavailable
+3. Functions for the variables created by our feature engineering team (vars created from base vars) 
+4. Functions for the variables created by our feature engineering team working only on enhanced (not working) dataset 
+
+We decided to keep the functions that could encode the uncomplete reservation varaibles as a way to improve this package in the future.
+
+#1. One-hot encoding on basic vars for air_data
+
+# One hot encoding for VISIT day:
+
+```{r}
+# test <- air_data
+# test <- vday_transf(test)
+```
+
