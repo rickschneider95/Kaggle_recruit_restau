@@ -70,8 +70,12 @@ sol2 <- sol2 %>%
 
 ##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 ```{r}
+<<<<<<< HEAD
 complete_data <- fread("./data/complete_data.csv")
 names(complete_data)
+=======
+
+>>>>>>> Feature-engineering
 ```
 
 # AIR :
@@ -381,6 +385,7 @@ vdayweek_transf <- function(data){
 
 ```{r}
 <<<<<<< HEAD
+<<<<<<< HEAD
 lon_transf <- function(data){
   one_h <- data
   one_h$longitude <- as.factor(round(one_h$longitude,1))
@@ -388,6 +393,9 @@ lon_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
 =======
 lat_transf <- function(data){
+=======
+lon_transf <- function(data){
+>>>>>>> Feature-engineering
   one_h <- data %>%
     select(longitude) %>%
     map(round, digits = 1) %>%
@@ -403,6 +411,7 @@ lat_transf <- function(data){
 
 ```{r}
 <<<<<<< HEAD
+<<<<<<< HEAD
 lat_transf <- function(data){
   one_h <- data
   one_h$latitude <- as.factor(round(one_h$latitude,1))
@@ -410,6 +419,9 @@ lat_transf <- function(data){
   one_h <- one_hot(as.data.table(one_h))
 =======
 lon_transf <- function(data){
+=======
+lat_transf <- function(data){
+>>>>>>> Feature-engineering
   one_h <- data %>%
     select(latitude) %>%
     map(round, digits = 1) %>%
@@ -624,6 +636,43 @@ wknd_transf <- function(data){
 }
 ```
 
+## one hot encoding for welth per area :
+
+One hot encoding according to mean GDP per capita per areas in Japan !
+
+```{r}
+wealth_transf <- function(data){
+  one_h <- air_data %>%
+    mutate(area_name = as.character(area_name)) %>% 
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                                                                       TRUE ~ area_name)) %>% # error in the data
+    mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>% 
+    mutate(wealth = case_when(area_name == "Tōkyō-to" ~ "High",
+                              area_name == "Shizuoka" | area_name == "Hyōgo-ke" | area_name == "Ōsaka-fu" ~ "Middle/High",
+                              area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaidō" ~ "Middle",
+                              area_name == "Fukuoka-" ~ "Middle/Low",
+                              TRUE ~ "Low")) %>% 
+    select(wealth) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+# extract nth day of the year
+
+```{r}
+nth_day_trasnf <- function(data){
+  days <- c(1:365,1:152)
+  dates <- date_info %>%
+    cbind(days) %>% 
+    select(visit_date,days)
+  data <- data %>%
+    left_join(dates, by = "visit_date") 
+}
+```
+
 
 #Holiday feels -> It's beginning to look a lot like Christmas
 The rationale behind the next transformation is that days prior and after actual holidays, people might feel joyful, or take holidays (even though Japanese people do not take that many holidays), and it might influence the number of people going to restaurants.
@@ -755,14 +804,14 @@ try <- genre_gr_transf(try)
 try <- vdayweek_transf(try)
 try <- bme_vmonth_transf(try)
 try <- vholflg_transf(try)
-try <- lat_transf(try)
-try <- lon_transf(try)
+# try <- lat_transf(try)
+# try <- lon_transf(try)
 try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
-
-
+try <- wealth_transf(try)
+try <- nth_day_trasnf(try)
 
 try
 
@@ -782,10 +831,13 @@ try <- latency_transf(try)
 try <- basic_area_transf(try)
 
 ## To debug bin:
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 try <- lat_transf(try)
 try <- lon_transf(try)
+=======
+>>>>>>> Feature-engineering
 =======
 >>>>>>> Feature-engineering
 ```
@@ -825,6 +877,9 @@ data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(to
  -> Steak/Hamburger/Curry can go with Grilled meat
  -> Bar/Cocktail with amusement bar??
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Feature-engineering
 
  Here is the code to transform it:
 
@@ -845,6 +900,7 @@ regroup <- function(data){
                                   genre_name == "Asian" ~ "Yakiniku/Korean food",
                                   genre_name == "Cafe/Sweets" ~ "Cafe",
                                   genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
+<<<<<<< HEAD
                                   TRUE ~ .))
 } ## NEED TO FIX
 ```
@@ -853,6 +909,13 @@ regroup <- function(data){
 - We have NA's for day of the week reserve and day of the week visit:
 =======
  
+=======
+                                  TRUE ~ as.character(genre_name)))
+} 
+```
+
+
+>>>>>>> Feature-engineering
 LOOK AT genre_gr_transf :))
 
 - We have NA's for day of the week reserve and day of the week visit: *SOLVED*
@@ -866,13 +929,12 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
-try <- try[,-c(4:9)]
+try <- try[,-c(4:8)]
 
+#CHANGE LAST NUMBER EVERY NEW VERSION:
+write.csv(try, "data/data_1h_xgb_CORRECT_6.csv", row.names = FALSE)
 
-#CHANFE LAST NUMBER EVERY NEW VERSION:
-write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
-
-trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
+trytry <- read.csv("data/data_1h_xgb_CORRECT_6.csv")
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
@@ -1017,11 +1079,11 @@ air_data
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE*
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
-
-
+-> get day of the year 1 to 365 for 2016 and for 2017 lubridate 
+-> weak of the year 
 
 
 
