@@ -26,12 +26,12 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 
 # HPG :
 
-Do we really want to use the HPG info? We only have the reservations not the actual number of visits. The only way we could integrate them is to assume that for each reservation everyone showed up. 
+Do we really want to use the HPG info? We only have the reservations not the actual number of visits. The only way we could integrate them is to assume that for each reservation everyone showed up.
 
 ```{r}
 ids <- read.csv("data/store_id_relation.csv")
 ids
-check <- hpg_reserve %>% inner_join(ids, by = "hpg_store_id") # actually not even sure we need to do this... or maybe for xgb since we only have air id's in the sample submission? 
+check <- hpg_reserve %>% inner_join(ids, by = "hpg_store_id") # actually not even sure we need to do this... or maybe for xgb since we only have air id's in the sample submission?
 check <- check %>% mutate(id = as.character(air_store_id))
 
 hpg_store_info
@@ -44,32 +44,38 @@ summary(is.na(ccheck)) # I checked, the NA's we have are there because we are mi
 # either we get rid of the NA's, or we don't (left with 13528 obs) -> sol 1 ; sol 2
 # either we change reserve visitors to visitors pretending all of them showed up or we don't use the hpg data AT ALL
 
-# sol 1 : 
+
+# sol 1 :
 
 sol1 <- na.omit(ccheck)
-sol1 <- sol1 %>% 
-  mutate(visit_date = as.factor(str_sub(as.character(visit_datetime), start = 1, end = 10))) %>% 
-  rename(area_name = hpg_area_name) %>% 
-  rename(genre_name = hpg_genre_name) %>% 
-  rename(visitors = reserve_visitors) %>% 
+sol1 <- sol1 %>%
+  mutate(visit_date = as.factor(str_sub(as.character(visit_datetime), start = 1, end = 10))) %>%
+  rename(area_name = hpg_area_name) %>%
+  rename(genre_name = hpg_genre_name) %>%
+  rename(visitors = reserve_visitors) %>%
   select(id,visit_datetime,area_name,genre_name,longitude,latitude,visitors)
 # rbind(data_air,sol1) <== TO APPLY ONLY IF WE CHOOSE THIS SOL°
 data_air
 
-# sol 2 : 
+# sol 2 :
 
-sol2 <- sol2 %>% 
-  mutate(visit_date = as.factor(str_sub(as.character(visit_datetime), start = 1, end = 10))) %>% 
-  rename(area_name = hpg_area_name) %>% 
-  rename(genre_name = hpg_genre_name) %>% 
-  rename(visitors = reserve_visitors) %>% 
+sol2 <- sol2 %>%
+  mutate(visit_date = as.factor(str_sub(as.character(visit_datetime), start = 1, end = 10))) %>%
+  rename(area_name = hpg_area_name) %>%
+  rename(genre_name = hpg_genre_name) %>%
+  rename(visitors = reserve_visitors) %>%
   select(id,visit_datetime,area_name,genre_name,longitude,latitude,visitors)
 # rbind(data_air,sol2) <== TO APPLY ONLY IF WE CHOOSE THIS SOL°
 ```
 
+##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
+```{r}
+
+```
+
 # AIR :
 
-While looking at this I found something wierd, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
 ## Without reserve info :
 
@@ -79,8 +85,8 @@ While looking at this I found something wierd, since we decided not to use the r
 air_store_info <- read.csv("data/air_store_info.csv")
 air_visit_data <- read.csv("data/air_visit_data.csv")
 air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
-  rename(id = air_store_id) %>% 
-  rename(genre_name = air_genre_name) %>% 
+  rename(id = air_store_id) %>%
+  rename(genre_name = air_genre_name) %>%
   rename(area_name = air_area_name)
 
 summary(is.na(air_data)) # No NA's.
@@ -103,9 +109,9 @@ summary(is.na(air_data)) # No NA's.
 
 ### total visits per date per id:
 
-No need to sum over all reservations here since it's already done as such in the data. 
+No need to sum over all reservations here since it's already done as such in the data.
 
-## With reserve info : 
+## With reserve info :
 
 ```{r}
 dataset <- read.csv("data/complete_data_final.csv")
@@ -193,9 +199,11 @@ data_air <- data_air %>%
   ungroup()
 
 n_occur <- data.frame(table(data_air$id,data_air$visit_date))
-n_occur[n_occur$Freq > 1,] #Problem with the original csv. 
+n_occur[n_occur$Freq > 1,] #Problem with the original csv.
 
 summary(is.na(data_air))
+
+data_air %>% filter(id == "air_db80363d35f10926") %>% filter(visit_date == "2016-01-01")
 ```
 
 
@@ -367,7 +375,7 @@ vdayweek_transf <- function(data){
 # One hot encoding for LONGITUDE:
 
 ```{r}
-lat_transf <- function(data){
+lon_transf <- function(data){
   one_h <- data %>%
     select(longitude) %>%
     map(round, digits = 1) %>%
@@ -381,7 +389,7 @@ lat_transf <- function(data){
 # One hot encoding for LATITUDE:
 
 ```{r}
-lon_transf <- function(data){
+lat_transf <- function(data){
   one_h <- data %>%
     select(latitude) %>%
     map(round, digits = 1) %>%
@@ -595,6 +603,44 @@ wknd_transf <- function(data){
 }
 ```
 
+## one hot encoding for welth per area :
+
+One hot encoding according to mean GDP per capita per areas in Japan !
+
+```{r}
+wealth_transf <- function(data){
+  one_h <- air_data %>%
+    mutate(area_name = as.character(area_name)) %>% 
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                                                                       TRUE ~ area_name)) %>% # error in the data
+    mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>% 
+    mutate(wealth = case_when(area_name == "Tōkyō-to" ~ "High",
+                              area_name == "Shizuoka" | area_name == "Hyōgo-ke" | area_name == "Ōsaka-fu" ~ "Middle/High",
+                              area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaidō" ~ "Middle",
+                              area_name == "Fukuoka-" ~ "Middle/Low",
+                              TRUE ~ "Low")) %>% 
+    select(wealth) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+# extract nth day of the year
+
+```{r}
+nth_day_trasnf <- function(data){
+  days <- c(1:365,1:152)
+  dates <- date_info %>%
+    cbind(days) %>% 
+    select(visit_date,days)
+  data <- data %>%
+    left_join(dates, by = "visit_date") 
+}
+try <- nth_day_trasnf(try)
+```
+
 
 # Works only for data_air (reservation infos)
 
@@ -654,12 +700,12 @@ bme_rmonth_transf <- function(data){
 
 # one hot encoding for nb visits/reservation
 
-Needs improvement, we get around 200 new columns from one hot encoding so we should create categories: 
+Needs improvement, we get around 200 new columns from one hot encoding so we should create categories:
 - small rest <= 20
 - small/medium > 20 <= 50
 - medium > 50 <= 90
 - medium/large >90 <= 150
-- large > 150 
+- large > 150
 
 we can change according to preferences but here's the baseline of the function! (need to use case_when):
 
@@ -697,8 +743,7 @@ try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
-
-
+try <- wealth_transf(try)
 
 try
 
@@ -718,7 +763,6 @@ try <- latency_transf(try)
 try <- basic_area_transf(try)
 
 ## To debug bin:
-
 ```
 
 **NOTES**
@@ -749,7 +793,31 @@ data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(to
  -> Cafe/Sweets can go with Cafe
  -> Steak/Hamburger/Curry can go with Grilled meat
  -> Bar/Cocktail with amusement bar??
- 
+
+ Here is the code to transform it:
+
+```{r}
+regroup <- function(data){
+  data <- data_air %>%
+    mutate(genre_name = case_when(genre_name == "Izakaya" |
+                                    genre_name == "Okonomiyaki/Monja/Teppanyaki" |
+                                      genre_name == "Japanese food in general" |
+                                        genre_name == "Japanese cuisine/Kaiseki" ~ "Japanese food",
+                                  genre_name == "Italian/French" |
+                                    genre_name == "Italian" ~ "Western food",
+                                  genre_name == "Creative cuisine" |
+                                    genre_name == "Creative Japanese food" ~ "Creation",
+                                  genre_name == "Karaoke" |
+                                    genre_name == "Party" |
+                                      genre_name == "Karaoke/Party" ~ "Amusement bar",
+                                  genre_name == "Asian" ~ "Yakiniku/Korean food",
+                                  genre_name == "Cafe/Sweets" ~ "Cafe",
+                                  genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
+                                  TRUE ~ .))
+} ## NEED TO FIX
+```
+
+
 LOOK AT genre_gr_transf :))
 
 - We have NA's for day of the week reserve and day of the week visit: *SOLVED*
@@ -779,6 +847,7 @@ summary(is.na(trytry)) # No NA's
 trytry # we good fam
 ```
 
+Seems there is a small problem with the complete csv.
 
 
 
@@ -912,11 +981,11 @@ air_data
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE*
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
-
-
+-> get day of the year 1 to 365 for 2016 and for 2017 lubridate 
+-> weak of the year 
 
 
 
