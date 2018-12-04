@@ -105,6 +105,8 @@ air_data <- left_join(air_data,date_info,by="visit_date") %>%
   rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
 
 summary(is.na(air_data)) # No NA's.
+names(air_data)
+
 ```
 
 
@@ -620,6 +622,21 @@ wknd_transf <- function(data){
     map(one_hot)
   data <- data %>% cbind(one_h)
 }
+```
+
+
+#Holiday feels -> It's beginning to look a lot like Christmas
+The rationale behind the next transformation is that days prior and after actual holidays, people might feel joyful, or take holidays (even though Japanese people do not take that many holidays), and it might influence the number of people going to restaurants.
+```{r}
+#if holiday==1 (there is a holiday) then 2 days before and after transform to 2, creating a new category to take the "holiday feels" effect into account
+air_data <- air_data %>%
+  mutate(holiday_flg_visit = case_when(
+    (lead(holiday_flg_visit,1)==1)&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
+    lead(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    TRUE ~ as.numeric(holiday_flg_visit)
+  ))
 ```
 
 
