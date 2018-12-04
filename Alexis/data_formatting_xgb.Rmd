@@ -42,6 +42,7 @@ summary(is.na(ccheck)) # I checked, the NA's we have are there because we are mi
 #28,183 observations in the final data.
 # either we get rid of the NA's, or we don't (left with 13528 obs) -> sol 1 ; sol 2
 # either we change reserve visitors to visitors pretending all of them showed up or we don't use the hpg data AT ALL
+##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 
 # sol 1 :
 
@@ -68,7 +69,7 @@ sol2 <- sol2 %>%
 
 # AIR :
 
-While looking at this I found something wierd, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
 ## Without reserve info :
 
