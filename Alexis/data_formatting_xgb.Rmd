@@ -42,7 +42,7 @@ summary(is.na(ccheck)) # I checked, the NA's we have are there because we are mi
 #28,183 observations in the final data.
 # either we get rid of the NA's, or we don't (left with 13528 obs) -> sol 1 ; sol 2
 # either we change reserve visitors to visitors pretending all of them showed up or we don't use the hpg data AT ALL
-##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
+
 
 # sol 1 :
 
@@ -65,6 +65,11 @@ sol2 <- sol2 %>%
   rename(visitors = reserve_visitors) %>%
   select(id,visit_datetime,area_name,genre_name,longitude,latitude,visitors)
 # rbind(data_air,sol2) <== TO APPLY ONLY IF WE CHOOSE THIS SOL°
+```
+
+##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
+```{r}
+
 ```
 
 # AIR :
