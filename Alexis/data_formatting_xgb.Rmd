@@ -28,7 +28,7 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 Do we really want to use the HPG info? We only have the reservations not the actual number of visits. The only way we could integrate them is to assume that for each reservation everyone showed up.
 
 ```{r}
-ids <- read.csv("data/store_id_relation.csv")
+ids <- fread("data/store_id_relation.csv")
 ids
 check <- hpg_reserve %>% inner_join(ids, by = "hpg_store_id") # actually not even sure we need to do this... or maybe for xgb since we only have air id's in the sample submission?
 check <- check %>% mutate(id = as.character(air_store_id))
@@ -69,7 +69,8 @@ sol2 <- sol2 %>%
 
 ##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 ```{r}
-
+complete_data <- fread("./data/complete_data.csv")
+names(complete_data)
 ```
 
 # AIR :
@@ -81,8 +82,8 @@ While looking at this I found something weird, since we decided not to use the r
 ### Adding store info
 
 ```{r}
-air_store_info <- read.csv("data/air_store_info.csv")
-air_visit_data <- read.csv("data/air_visit_data.csv")
+air_store_info <- fread("data/air_store_info.csv")
+air_visit_data <- fread("data/air_visit_data.csv")
 air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
   rename(id = air_store_id) %>%
   rename(genre_name = air_genre_name) %>%
@@ -94,7 +95,7 @@ summary(is.na(air_data)) # No NA's.
 ### Adding date info
 
 ```{r}
-date_info <- read.csv("data/date_info.csv")
+date_info <- fread("data/date_info.csv")
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
@@ -113,7 +114,9 @@ No need to sum over all reservations here since it's already done as such in the
 ## With reserve info :
 
 ```{r}
-dataset <- read.csv("data/complete_data_final.csv")
+dataset <- fread("data/complete_data.csv")
+
+library(data.table)
 ```
 
 ```{r}
@@ -524,10 +527,23 @@ Needs improvement, we get around 200 new columns from one hot encoding so we sho
 we can change according to preferences but here's the baseline of the function! (need to use case_when):
 
 ```{r}
+names(complete_data)
 average_transf <- function(data){
   one_h <- data %>%
     mutate(av_per_day = as.factor(round(visitors/nb_res))) %>%
     select(av_per_day) %>%
+  one_h <- one_hot(as.data.table(one_h))
+  data <- data %>% cbind(one_h)
+}
+
+bme_rmonth_transf <- function(data){
+  one_h <- data
+  one_h$reserve_date <- as.integer(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
+  one_h <- one_h %>%
+    select(reserve_date) %>%
+    mutate(reserve_date = as.factor(case_when(reserve_date >= 0 & reserve_date <= 12 ~ "beginning",
+                                           reserve_date >= 13 & reserve_date <= 22 ~ "middle",
+                                                                          TRUE ~ "end")))
   one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
