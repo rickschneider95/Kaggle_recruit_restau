@@ -29,7 +29,7 @@ This file will be dedicated to formatting the complete_data.csv file to feed to 
 Do we really want to use the HPG info? We only have the reservations not the actual number of visits. The only way we could integrate them is to assume that for each reservation everyone showed up.
 
 ```{r}
-ids <- read.csv("data/store_id_relation.csv")
+ids <- fread("data/store_id_relation.csv")
 ids
 check <- hpg_reserve %>% inner_join(ids, by = "hpg_store_id") # actually not even sure we need to do this... or maybe for xgb since we only have air id's in the sample submission?
 check <- check %>% mutate(id = as.character(air_store_id))
@@ -70,7 +70,12 @@ sol2 <- sol2 %>%
 
 ##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 ```{r}
+<<<<<<< HEAD
+complete_data <- fread("./data/complete_data.csv")
+names(complete_data)
+=======
 
+>>>>>>> Feature-engineering
 ```
 
 # AIR :
@@ -82,8 +87,8 @@ While looking at this I found something weird, since we decided not to use the r
 ### Adding store info
 
 ```{r}
-air_store_info <- read.csv("data/air_store_info.csv")
-air_visit_data <- read.csv("data/air_visit_data.csv")
+air_store_info <- fread("data/air_store_info.csv")
+air_visit_data <- fread("data/air_visit_data.csv")
 air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
   rename(id = air_store_id) %>%
   rename(genre_name = air_genre_name) %>%
@@ -95,7 +100,7 @@ summary(is.na(air_data)) # No NA's.
 ### Adding date info
 
 ```{r}
-date_info <- read.csv("data/date_info.csv")
+date_info <- fread("data/date_info.csv")
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
@@ -104,6 +109,8 @@ air_data <- left_join(air_data,date_info,by="visit_date") %>%
   rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
 
 summary(is.na(air_data)) # No NA's.
+names(air_data)
+
 ```
 
 
@@ -114,7 +121,9 @@ No need to sum over all reservations here since it's already done as such in the
 ## With reserve info :
 
 ```{r}
-dataset <- read.csv("data/complete_data_final.csv")
+dataset <- fread("data/complete_data.csv")
+
+library(data.table)
 ```
 
 # filtering for only air id's
@@ -375,13 +384,25 @@ vdayweek_transf <- function(data){
 # One hot encoding for LONGITUDE:
 
 ```{r}
+<<<<<<< HEAD
+<<<<<<< HEAD
 lon_transf <- function(data){
+  one_h <- data
+  one_h$longitude <- as.factor(round(one_h$longitude,1))
+  one_h <- one_h %>% select(longitude)
+  one_h <- one_hot(as.data.table(one_h))
+=======
+lat_transf <- function(data){
+=======
+lon_transf <- function(data){
+>>>>>>> Feature-engineering
   one_h <- data %>%
     select(longitude) %>%
     map(round, digits = 1) %>%
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
+>>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -389,13 +410,25 @@ lon_transf <- function(data){
 # One hot encoding for LATITUDE:
 
 ```{r}
+<<<<<<< HEAD
+<<<<<<< HEAD
 lat_transf <- function(data){
+  one_h <- data
+  one_h$latitude <- as.factor(round(one_h$latitude,1))
+  one_h <- one_h %>% select(latitude)
+  one_h <- one_hot(as.data.table(one_h))
+=======
+lon_transf <- function(data){
+=======
+lat_transf <- function(data){
+>>>>>>> Feature-engineering
   one_h <- data %>%
     select(latitude) %>%
     map(round, digits = 1) %>%
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
+>>>>>>> Feature-engineering
   data <- data %>% cbind(one_h)
 }
 ```
@@ -641,6 +674,21 @@ nth_day_trasnf <- function(data){
 ```
 
 
+#Holiday feels -> It's beginning to look a lot like Christmas
+The rationale behind the next transformation is that days prior and after actual holidays, people might feel joyful, or take holidays (even though Japanese people do not take that many holidays), and it might influence the number of people going to restaurants.
+```{r}
+#if holiday==1 (there is a holiday) then 2 days before and after transform to 2, creating a new category to take the "holiday feels" effect into account
+air_data <- air_data %>%
+  mutate(holiday_flg_visit = case_when(
+    (lead(holiday_flg_visit,1)==1)&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
+    lead(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    TRUE ~ as.numeric(holiday_flg_visit)
+  ))
+```
+
+
 # Works only for data_air (reservation infos)
 
 ## One hot encoding for NUMBER OF RES:
@@ -709,13 +757,33 @@ Needs improvement, we get around 200 new columns from one hot encoding so we sho
 we can change according to preferences but here's the baseline of the function! (need to use case_when):
 
 ```{r}
+names(complete_data)
 average_transf <- function(data){
+<<<<<<< HEAD
+  one_h <- data %>%
+    mutate(av_per_day = as.factor(round(visitors/nb_res))) %>%
+    select(av_per_day) %>%
+  one_h <- one_hot(as.data.table(one_h))
+=======
   one_h <- data %>% 
     mutate(av_per_day = round(visitors/nb_res)) %>% 
     select(av_per_day) %>% 
     map(as.factor) %>% 
     map(as.data.table) %>% 
     map(one_hot)
+>>>>>>> Feature-engineering
+  data <- data %>% cbind(one_h)
+}
+
+bme_rmonth_transf <- function(data){
+  one_h <- data
+  one_h$reserve_date <- as.integer(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))
+  one_h <- one_h %>%
+    select(reserve_date) %>%
+    mutate(reserve_date = as.factor(case_when(reserve_date >= 0 & reserve_date <= 12 ~ "beginning",
+                                           reserve_date >= 13 & reserve_date <= 22 ~ "middle",
+                                                                          TRUE ~ "end")))
+  one_h <- one_hot(as.data.table(one_h))
   data <- data %>% cbind(one_h)
 }
 ```
@@ -736,8 +804,8 @@ try <- genre_gr_transf(try)
 try <- vdayweek_transf(try)
 try <- bme_vmonth_transf(try)
 try <- vholflg_transf(try)
-# try <- lat_transf(try)
-# try <- lon_transf(try)
+try <- lat_transf(try)
+try <- lon_transf(try)
 try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
@@ -763,6 +831,15 @@ try <- latency_transf(try)
 try <- basic_area_transf(try)
 
 ## To debug bin:
+<<<<<<< HEAD
+
+<<<<<<< HEAD
+try <- lat_transf(try)
+try <- lon_transf(try)
+=======
+>>>>>>> Feature-engineering
+=======
+>>>>>>> Feature-engineering
 ```
 
 **NOTES**
@@ -776,9 +853,15 @@ try <- basic_area_transf(try)
 
 -We're taking out lon/lat for now, we already have the area name for location info (there still is a function to one hot code it though just in case) CAREFUL it creates like 130 columns LMA0 *SOLVED* 
 
+<<<<<<< HEAD
+- genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe.
+
+WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission.
+=======
 - genre names has a lot of NA's. Also I had the idea to keep only the top categories, but that means taking out data from our complete dataset that is already deprived. Not sure it's the good way to go. We could although consider regrouping genres together when they are resemblant! (might lose precision) ==> UPDATE : this actually can't work. We're taking out observations so it's just messing the dataframe. *SOLVED*
 
 WHAT WE CAN DO, is regroup genres according to their similarities in the complete dataset. If e do it after hand we won't be able to retrieve genres for some id's in the sample submission. *SOLVED*
+>>>>>>> Feature-engineering
 
 ```{r}
 data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(total))
@@ -793,6 +876,10 @@ data_air %>% group_by(genre_name) %>% summarise(total = n()) %>% arrange(desc(to
  -> Cafe/Sweets can go with Cafe
  -> Steak/Hamburger/Curry can go with Grilled meat
  -> Bar/Cocktail with amusement bar??
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Feature-engineering
 
  Here is the code to transform it:
 
@@ -813,14 +900,26 @@ regroup <- function(data){
                                   genre_name == "Asian" ~ "Yakiniku/Korean food",
                                   genre_name == "Cafe/Sweets" ~ "Cafe",
                                   genre_name == "Steak/Hamburger/Curry" ~ "Grilled meat",
+<<<<<<< HEAD
+                                  TRUE ~ .))
+} ## NEED TO FIX
+```
+
+
+- We have NA's for day of the week reserve and day of the week visit:
+=======
+ 
+=======
                                   TRUE ~ as.character(genre_name)))
 } 
 ```
 
 
+>>>>>>> Feature-engineering
 LOOK AT genre_gr_transf :))
 
 - We have NA's for day of the week reserve and day of the week visit: *SOLVED*
+>>>>>>> Feature-engineering
 
 ```{r}
 sum(is.na(data_air$day_of_the_week_reserve))
