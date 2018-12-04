@@ -94,9 +94,7 @@ air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
   rename(area_name = air_area_name)
 
 summary(is.na(air_data)) # No NA's.
-
-
-=======
+```
 
 While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
@@ -113,18 +111,13 @@ air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
   rename(area_name = air_area_name)
 
 summary(is.na(air_data)) # No NA's.
->>>>>>> Feature-engineering
 ```
 
 
 ### Adding date info
 
 ```{r}
-<<<<<<< HEAD
-date_info <- fread("data/date_info.csv")
-=======
 date_info <- read.csv("data/date_info.csv")
->>>>>>> Feature-engineering
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
@@ -547,11 +540,6 @@ genre_gr_transf <- function(data){
     map(one_hot)
     data <- data %>% cbind(one_h)
 }
-<<<<<<< HEAD
-
-test %>% group_by(genre_name) %>% summarise(total = n()) # Checks to give insight for re-arrangement.
-=======
->>>>>>> Feature-engineering
 ```
 
 ## one hot encoding for bar/restaurant separation:
@@ -642,8 +630,6 @@ wknd_transf <- function(data){
 }
 ```
 
-<<<<<<< HEAD
-=======
 ## one hot encoding for welth per area :
 
 One hot encoding according to mean GDP per capita per areas in Japan !
@@ -695,7 +681,6 @@ test <- air_data %>%
     TRUE ~ as.numeric(holiday_flg_visit)
   ))
 ```
->>>>>>> Feature-engineering
 
 # Works only for data_air (reservation infos)
 
@@ -737,8 +722,6 @@ latency_transf <- function(data){
 
 ## one hot encoding for RESERVE start/end of the month :
 
-same as above but for reservation date!
-
 ```{r}
 bme_rmonth_transf <- function(data){
   one_h <- data
@@ -774,8 +757,6 @@ average_transf <- function(data){
     map(one_hot)
   data <- data %>% cbind(one_h)
 }
-<<<<<<< HEAD
-=======
 ```
 
 ```{r}
