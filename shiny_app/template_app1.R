@@ -5,11 +5,33 @@ library(timeDate)
 library(leaflet)
 
 df <- read.csv("data/air_data.csv",encoding="UTF-8") 
+df <- df %>% 
+  mutate(visit_month= months(as.Date(visit_date))) %>% 
+  mutate(visit_month=as.factor(visit_month))
 ## if visit_time = NA pour ne pas avoir de doublon
 ## ordre des factors plot
 
-df <- df %>% 
-  mutate(visit_month= months(as.Date(visit_date)))
+###################################
+# Sort factor levels arbitrarily
+sortLvls.fnc <- function(oldFactor, levelOrder) {
+  if(!is.factor(oldFactor)) stop("The variable you want to reorder isn't a factor.")
+  if(!is.numeric(levelOrder)) stop("'order' should be a numeric vector.")
+  if(max(levelOrder) > length(levels(oldFactor))) stop("The largest number in 'order' can't be larger than the number of levels in the factor.")
+  if(length(levelOrder) > length(levels(oldFactor))) stop("You can't have more elements in 'order' than there are levels in the factor.")
+  if(length(levelOrder) == length(levels(oldFactor))) {
+    reorderedFactor <- factor(oldFactor, levels = levels(oldFactor)[levelOrder])
+  }
+  if(length(levelOrder) < length(levels(oldFactor))) {
+    levelOrderAll <- c(levelOrder, (1:length(levels(oldFactor)))[-levelOrder])
+    reorderedFactor <- factor(oldFactor, levels = levels(oldFactor)[levelOrderAll])
+  }
+  return(reorderedFactor)
+}
+
+df$day_of_the_week_visit <- sortLvls.fnc(df$day_of_the_week_visit, c(2, 6, 7, 5, 1,3,4))
+df$visit_month <- sortLvls.fnc(df$visit_month, c(5,4,9,2,8,7,6,1,12,11,10,3))
+###########################################################
+
 
 
 ui <- fluidPage(
