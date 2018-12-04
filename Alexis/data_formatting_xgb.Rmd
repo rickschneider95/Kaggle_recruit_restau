@@ -17,6 +17,8 @@ library(stringr)
 library(lubridate)
 library(caret)
 library(purrr)
+library(RcppRoll)
+library(zoo)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
@@ -75,6 +77,7 @@ sol2 <- sol2 %>%
 
 to deleeeeteeeee:::::
 # AIR :
+<<<<<<< HEAD
 
 While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
@@ -93,13 +96,35 @@ air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
 summary(is.na(air_data)) # No NA's.
 
 
+=======
+
+While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+
+## Without reserve info :
+
+### Adding store info
+
+```{r}
+air_store_info <- read.csv("data/air_store_info.csv")
+air_visit_data <- read.csv("data/air_visit_data.csv")
+air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
+  rename(id = air_store_id) %>%
+  rename(genre_name = air_genre_name) %>%
+  rename(area_name = air_area_name)
+
+summary(is.na(air_data)) # No NA's.
+>>>>>>> Feature-engineering
 ```
 
 
 ### Adding date info
 
 ```{r}
+<<<<<<< HEAD
 date_info <- fread("data/date_info.csv")
+=======
+date_info <- read.csv("data/date_info.csv")
+>>>>>>> Feature-engineering
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
@@ -216,6 +241,12 @@ data_air %>% filter(id == "air_db80363d35f10926") %>% filter(visit_date == "2016
 We will need to use the air_data (based only on date_info, air_visit_data, air_store_info) rather than data_air (using all datasets) until we find a solution for the time series improved prediction.
 
 ## ONE HOT ENCODING ON FIRST BASE VARS
+
+Now that dataset has been created : 
+```{r}
+air_data <- read.csv("data/air_data.csv")
+```
+
 
 This is the one hot encoding section (under form of functions) for the variables we start with in the complete dataset. Splitting them into functions was a conscious choice that gives us more flexibility as to what we want to one-hot encode, if we want to change the code at a later time.
 
@@ -516,8 +547,11 @@ genre_gr_transf <- function(data){
     map(one_hot)
     data <- data %>% cbind(one_h)
 }
+<<<<<<< HEAD
 
 test %>% group_by(genre_name) %>% summarise(total = n()) # Checks to give insight for re-arrangement.
+=======
+>>>>>>> Feature-engineering
 ```
 
 ## one hot encoding for bar/restaurant separation:
@@ -608,6 +642,60 @@ wknd_transf <- function(data){
 }
 ```
 
+<<<<<<< HEAD
+=======
+## one hot encoding for welth per area :
+
+One hot encoding according to mean GDP per capita per areas in Japan !
+
+```{r}
+wealth_transf <- function(data){
+  one_h <- data %>%
+    mutate(area_name = as.character(area_name)) %>% 
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+                                                                       TRUE ~ area_name)) %>% # error in the data
+    mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>% 
+    mutate(wealth = case_when(area_name == "Tōkyō-to" ~ "High",
+                              area_name == "Shizuoka" | area_name == "Hyōgo-ke" | area_name == "Ōsaka-fu" ~ "Middle/High",
+                              area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaidō" ~ "Middle",
+                              area_name == "Fukuoka-" ~ "Middle/Low",
+                              TRUE ~ "Low")) %>% 
+    select(wealth) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+## extract nth day of the year
+
+```{r}
+nth_day_trasnf <- function(data){
+  days <- c(1:365,1:152)
+  dates <- date_info %>%
+    cbind(days) %>% 
+    select(visit_date,days)
+  data <- data %>%
+    left_join(dates, by = "visit_date") 
+}
+```
+
+## one hot encoding for holidays
+
+The rationale behind the next transformation is that days prior and after actual holidays, people might feel joyful, or take holidays (even though Japanese people do not take that many holidays), and it might influence the number of people going to restaurants.
+```{r}
+#if holiday==1 (there is a holiday) then 2 days before and after transform to 2, creating a new category to take the "holiday feels" effect into account
+test <- air_data %>%
+  mutate(holiday_flg_visit = case_when(
+    (lead(holiday_flg_visit,1)==1)&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
+    lead(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2,
+    lag(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
+    TRUE ~ as.numeric(holiday_flg_visit)
+  ))
+```
+>>>>>>> Feature-engineering
 
 # Works only for data_air (reservation infos)
 
@@ -686,7 +774,72 @@ average_transf <- function(data){
     map(one_hot)
   data <- data %>% cbind(one_h)
 }
+<<<<<<< HEAD
+=======
 ```
+
+```{r}
+data_new <- air_data
+
+sample_try <- sample_try  %>% group_by(id) %>% 
+  mutate(lag_1 = lag(visitors, 1),
+         lag_2 = lag(visitors, 2),
+         lag_3 = lag(visitors, 3),
+         lag_4 = lag(visitors, 4),
+         lag_5 = lag(visitors, 5),
+         lag_6 = lag(visitors, 6),
+         lag_7 = lag(visitors, 7),
+         lag_8 = lag(visitors, 8),
+         lag_9 = lag(visitors, 9),
+         lag_10 = lag(visitors, 10),
+         lag_11 = lag(visitors, 11),
+         lag_12 = lag(visitors, 12),
+         lag_13 = lag(visitors, 13),
+         lag_14 = lag(visitors, 14),
+         lag_15 = lag(visitors, 15),
+         lag_16 = lag(visitors, 16),
+         lag_17 = lag(visitors, 17),
+         lag_18 = lag(visitors, 18),
+         lag_19 = lag(visitors, 19),
+         lag_20 = lag(visitors, 20),
+         lag_21 = lag(visitors, 21),
+         lag_22 = lag(visitors, 22),
+         lag_23 = lag(visitors, 23),
+         lag_24 = lag(visitors, 24),
+         lag_25 = lag(visitors, 25),
+         lag_26 = lag(visitors, 26),
+         lag_27 = lag(visitors, 27),
+         lag_28 = lag(visitors, 28),
+         lag_30 = lag(visitors, 30),
+         lag_33 = lag(visitors, 33),
+         lag_36 = lag(visitors, 36),
+         lag_39 = lag(visitors, 39),
+         lag_40 = lag(visitors, 40),
+         lag_50 = lag(visitors, 50),
+         lag_60 = lag(visitors, 60),
+         lag_70 = lag(visitors, 70),
+         lag_80 = lag(visitors, 80),
+         lag_90 = lag(visitors, 90),
+         lag_100 = lag(visitors, 100),
+         lag_120 = lag(visitors, 120),
+         lag_150 = lag(visitors, 150),
+         lag_180 = lag(visitors, 180),
+         avg_7 = lag(roll_meanr(visitors, 7), 1),
+         avg_3 = lag(roll_meanr(visitors, 3), 1),
+         avg_7 = lag(roll_meanr(visitors, 7), 1),
+         avg_14 = lag(roll_meanr(visitors, 14), 1),
+         avg_21 = lag(roll_meanr(visitors, 21), 1),
+         avg_28 = lag(roll_meanr(visitors, 28), 1),
+         avg_50 = lag(roll_meanr(visitors, 50), 1),
+         avg_100 = lag(roll_meanr(visitors, 100), 1),
+         avg_150 = lag(roll_meanr(visitors, 150), 1),
+         avg_200 = lag(roll_meanr(visitors, 200), 1),
+         avg_250 = lag(roll_meanr(visitors, 250), 1),
+         avg_300 = lag(roll_meanr(visitors, 300), 1)
+         )
+>>>>>>> Feature-engineering
+```
+
 
 ## TRY CHUNK ( TRY MY CHUNK (:^<) )
 
@@ -696,7 +849,7 @@ this chunk is for you to test out the different one hot encoding functions. have
 try <- air_data
 
 # Transf functions on basic vars:
-
+try <- nth_day_trasnf(try)
 try <- vmonth_transf(try)
 try <- vyear_transf(try)
 try <- area_transf(try)
@@ -710,8 +863,12 @@ try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
+<<<<<<< HEAD
 
 
+=======
+try <- wealth_transf(try)
+>>>>>>> Feature-engineering
 
 try
 
@@ -733,6 +890,31 @@ try <- basic_area_transf(try)
 ## To debug bin:
 
 ```
+
+# Sample submission feature engineering :
+```{r}
+sample_try <- read.csv("data/submission_data.csv") %>% 
+  rename(visit_date = predict_date) %>% 
+  rename(day_of_the_week_visit = day_of_week) %>% 
+  rename(holiday_flg_visit = holiday_flg)
+
+sample_try <- nth_day_trasnf(sample_try)
+sample_try <- vmonth_transf(sample_try)
+sample_try <- vyear_transf(sample_try)
+sample_try <- area_transf(sample_try)
+sample_try <- genre_gr_transf(sample_try)
+sample_try <- vdayweek_transf(sample_try)
+sample_try <- bme_vmonth_transf(sample_try)
+sample_try <- vholflg_transf(sample_try)
+sample_try <- lat_transf(sample_try)
+sample_try <- lon_transf(sample_try)
+sample_try <- goldd_transf(sample_try)
+sample_try <- goldw_transf(sample_try)
+sample_try <- barrest_transf(sample_try)
+sample_try <- wknd_transf(sample_try)
+sample_try <- wealth_transf(sample_try)
+```
+
 
 **NOTES**
 
@@ -775,6 +957,7 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
+<<<<<<< HEAD
 try <- try[,-c(4:9)]
 
 
@@ -782,12 +965,21 @@ try <- try[,-c(4:9)]
 write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
+=======
+sample_try <- sample_try[,-c(4:9)]
+
+
+#CHANFE LAST NUMBER EVERY NEW VERSION:
+write.csv(sample_try, "data/data_1h_xgb_samplesubmission.csv", row.names = FALSE)
+
+trytry <- read.csv("data/data_1h_xgb_samplesubmission.csv")
+>>>>>>> Feature-engineering
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
 n_occur[n_occur$Freq > 1,]  # No duplicates
 
-summary(is.na(trytry)) # No NA's
+summary(is.na(trytry)) # No NA's except for timeseries features
 
 trytry # we good fam
 ```
