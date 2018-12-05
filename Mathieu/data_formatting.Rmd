@@ -89,21 +89,101 @@ general_overview(df,day_of_the_week_visit)
       aes(x =visit_time, y = total) +
       geom_point()
 
+levels(df$day_of_the_week_visit)
 
 
+# Sort factor levels arbitrarily
+sortLvls.fnc <- function(oldFactor, levelOrder) {
+  if(!is.factor(oldFactor)) stop("The variable you want to reorder isn't a factor.")
+  if(!is.numeric(levelOrder)) stop("'order' should be a numeric vector.")
+  if(max(levelOrder) > length(levels(oldFactor))) stop("The largest number in 'order' can't be larger than the number of levels in the factor.")
+   if(length(levelOrder) > length(levels(oldFactor))) stop("You can't have more elements in 'order' than there are levels in the factor.")
+  if(length(levelOrder) == length(levels(oldFactor))) {
+    reorderedFactor <- factor(oldFactor, levels = levels(oldFactor)[levelOrder])
+  }
+  if(length(levelOrder) < length(levels(oldFactor))) {
+    levelOrderAll <- c(levelOrder, (1:length(levels(oldFactor)))[-levelOrder])
+    reorderedFactor <- factor(oldFactor, levels = levels(oldFactor)[levelOrderAll])
+  }
+  return(reorderedFactor)
+}
+
+df$day_of_the_week_visit <- sortLvls.fnc(df$day_of_the_week_reserve, c(2, 6, 7, 5, 1,3,4))
+
+levels(df$day_of_the_week_visit)
  
- 
+df <- read.csv("data/air_data.csv",encoding="UTF-8") 
+
+df <- df %>% 
+  mutate(visit_month= months(as.Date(visit_date))) %>% mutate(visit_month=as.factor(visit_month))
+glimpse(df)
+levels(df$visit_month)
+df$visit_month <- sortLvls.fnc(df$visit_month, c(5,4,9,2,8,7,6,1,12,11,10,3))
+levels(df$visit_month)
 ```
 
 ```{r}
 library(leaflet)
 
+  getColor <- function(rest) {
+    sapply(rest$genre_name, function(genre_name) {
+      if(genre_name == "Italian/French") {
+        "green"
+      } else if(genre_name == "Diner bar") {
+        "orange"
+      } else if(genre_name == "Izakaya"){
+        "blue"
+      } else if(genre_name == "Bar/Cocktail"){
+        "red"
+      }
+      else if(genre_name == "Asian"){
+        "darkgreen"
+      }
+      else{
+        "purple"
+      }
+    })
+  }
+
+  
+  icons <- awesomeIcons(
+    icon = 'ios-close',
+    iconColor = 'black',
+    library = 'ion',
+    markerColor = getColor(df)
+  )
+
+
 leaflet(df %>% distinct(id, .keep_all = TRUE)) %>%
   addTiles() %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addMarkers(~longitude, ~latitude,
+  addAwesomeMarkers(~longitude, ~latitude,
              popup = ~id, label = ~genre_name,
-              clusterOptions = markerClusterOptions())
+              clusterOptions = markerClusterOptions(),icon=icons)
+
+
+```
+
+```{r}
+library(epitools)
+df <- df %>% 
+  mutate(visit_month= months(as.Date(visit_date)))
+
+test <- unique(df$visit_month)
+
+
+```
+
+```{r}
+df1 <- read.csv("data/air_data.csv",encoding="UTF-8")
+df2 <- read.csv("data/air_reserve.csv",encoding="UTF-8")
+df2 <-df2 %>% separate(visit_datetime, into = c('visit_date', 'visit_time'), sep = 10) %>% separate(reserve_datetime, into = c('reserve_date', 'reserve_time'), sep = 10)
+df2 <- df2 %>% rename(id=air_store_id)
+df3 <- full_join(df1,df2,by=c('id','visit_date'))
+
+df3 <- df3 %>% select(-reserve_date,-reserve_time,-reserve_visitors)
+df3 <- df3 %>% mutate(area_name = substr(area_name, 0, 8))
+write.csv(df3, file="data/air_data.csv", row.names = FALSE)
 
 
 ```
