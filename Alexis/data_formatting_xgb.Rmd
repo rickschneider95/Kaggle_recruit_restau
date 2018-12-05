@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(data.table)
 library(dplyr)
 library(onehot)
 library(data.table)
@@ -102,7 +103,7 @@ date_info <- date_info %>%
 
 air_data <- left_join(air_data,date_info,by="visit_date") %>%
   rename(day_of_the_week_visit = day_of_week) %>%
-  rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
+  rename(holiday_flg_visit = holiday_flg) # CAREFUL, here it's an inner join, some days there were just no restaurants open
 
 summary(is.na(air_data)) # No NA's.
 names(air_data)
@@ -118,8 +119,6 @@ No need to sum over all reservations here since it's already done as such in the
 
 ```{r}
 dataset <- fread("data/complete_data.csv")
-
-library(data.table)
 ```
 
 # filtering for only air id's
@@ -165,7 +164,7 @@ data_air <- inner_join(data_air,date_info,by="visit_date") %>%
 summary(is.na(data_air))
 ```
 
-And there we have it! a complete dataset with no NA's in dates and visitors, only some in the features we have regarding the identifiers but this is only due to the fact that they were missing to begin with!
+And there we have it! a complete dataset with no NA's in dates and visitors, only some in the features we have regarding the identifiers but this is only due to the fact that they were missing to begin with! They seem to be from the MCAR(Missing Completely At Random) type : probability does not depend on any values, hence imputing them would be "extremely seductive but dangerous" (Dempster and Rubin 1983) 
 
 ### Counting nb of reservations per date per id:
 
@@ -180,8 +179,8 @@ levels(as.factor(data_air$nb_res)) # different nb of reservations in the data! n
 
 ## Formatting for one hot encoding:
 
-There is a big question in regards to what we shall do with the info from the air_reserve data. We have info on the time of the visit and the data AND time of the reservation as well as count in reservation but only on ~300 of the ~800 id's we have in the air_visit data (date on visit date and number of visitors => WHAT WE'RE TRYING TO PREDICT).
-With this info from air reserve we would be able to see the differences in the number of people who actually showed up, how much time did they reserve in advance to get an idea of hwo fancy the restaurant is etc.. We're missing a lot of data on that so what should we do?
+There is a big question with regards to what we shall do with the info from the air_reserve data. We have info on the time of the visit and the data AND time of the reservation as well as count in reservation but only on ~300 of the ~800 id's we have in the air_visit data (date on visit date and number of visitors => WHAT WE'RE TRYING TO PREDICT).
+With this info from air_reserve we would be able to see the differences in the number of people who actually showed up and how much time they reserved in advance to get an idea of how fancy the restaurant is etc.. We're missing a lot of data on that so what should we do?
 The XGB algo has to train on vars that exist in the sample submission, since in the sample submission we only have the id and the date the only info we'll be able to retrieve is:
 
 - day of the week (from the date)
@@ -191,7 +190,7 @@ The XGB algo has to train on vars that exist in the sample submission, since in 
 
 We can then create more variables BUT ONLY from these vars that we are able to collect from the sample submission. So how are we supposed to use all the reserve info?
 
-For now I'll go on assuming that the reserve info is useless and only construct on variables that we can retrieve from the info in the sample submission. You will still find functions that can work with the reserve data but I won't be using them, at least for now.
+For now we will assume that the reserve info is useless and only construct on variables that we can retrieve from the info in the sample submission. You will still find functions that can work with the reserve data but I won't be using them, at least for now.
 
 In the sample submission we have unique rows with an identifier and a given date. Here we often have several rows containing the same identifier and the same date but not the same number of visitors. This makes sense since you will have several different groups of costumers throughout the day. We want to regroup all the visits on a given date for a given identifier since this is what we're trying to predict!
 
@@ -207,11 +206,7 @@ n_occur <- data.frame(table(data_air$id,data_air$visit_date))
 n_occur[n_occur$Freq > 1,] #Problem with the original csv.
 
 summary(is.na(data_air))
-
-data_air %>% filter(id == "air_db80363d35f10926") %>% filter(visit_date == "2016-01-01")
 ```
-
-
 
 We will need to use the air_data (based only on date_info, air_visit_data, air_store_info) rather than data_air (using all datasets) until we find a solution for the time series improved prediction.
 
@@ -640,6 +635,31 @@ air_data <- air_data %>%
 ```
 
 
+#Group restaurants by class
+```{r}
+typesRest <- unique(air_data$genre_name)
+typesRest
+# GROUPS
+group1 <- c("Italian/Franch","International cuisine","Western food","Other")
+group2 <- c("Okonomiyaki/Monja/Teppanyaki","Izakaya","Japanese food","Asian")
+
+
+
+goldw_transf <- function(data){
+  one_h <- data %>% 
+    mutate(visit_date = ymd(visit_date)) %>% 
+    mutate(goldenweek = case_when(visit_date > ymd("20160428") & visit_date < ymd("20160507") ~ 1,
+                                  visit_date > ymd("20170428") & visit_date < ymd("20170507") ~ 1,
+                                                                                         TRUE ~ 0)) %>% 
+    select(goldenweek) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
+    map(one_hot)
+  data <- data %>% cbind(one_h)
+}
+```
+
+
 # Works only for data_air (reservation infos)
 
 ## One hot encoding for NUMBER OF RES:
@@ -1012,7 +1032,7 @@ levels(as.factor(try$visit_date))
 this where you come to rest your eyes and think of what crazy variables you shall create from this anorexic dataset.. (microdosing not allowed ;) )
 
 ```{r}
-air_data
+names(air_data)
 ```
 
 -> seperate Bars from Restaurants ? *DONE*
@@ -1020,12 +1040,4 @@ air_data
 -> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
 -> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
-
-
-
-
-
-
-
-
-
+-> create groups of types of restaurants, to push some types that could receive different ppl
