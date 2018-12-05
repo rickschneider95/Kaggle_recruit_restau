@@ -667,7 +667,7 @@ The rationale behind the next transformation is that days prior and after actual
 #if holiday==1 (there is a holiday) then 2 days before and after transform to 2, creating a new category to take the "holiday feels" effect into account
 test <- air_data %>%
   mutate(holiday_flg_visit = case_when(
-    (lead(holiday_flg_visit,1)==1)&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
+    lead(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
     lead(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
     lag(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2,
     lag(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
@@ -683,7 +683,7 @@ Using time series we improve our prediction significantly by creating the lag va
 lag_transf <- function(data){
   data <- data %>%
     group_by(id) %>% 
-    mutate(lag_1 = lag(visitors, 1),
+    mutate(lag_1 = lag(visitors, 1),  #looks at the visitors 1 row before the visitors we are currently looking at.
            lag_2 = lag(visitors, 2),
            lag_3 = lag(visitors, 3),
            lag_4 = lag(visitors, 4),
