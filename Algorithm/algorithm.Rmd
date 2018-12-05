@@ -44,11 +44,11 @@ split_index <- round(nrow(data)*0.8)
 
 id_visit_date <- data %>% select(id,visit_date)
 
-data <- data %>% select(-id)
-data <- data %>%select(-visit_date)
+data <- data %>% 
+  select(-id,-visit_date) %>%
+  rename(target = visitors) #change response variable name to target
 
-#change response variable name to target:
-data <- data %>% rename(target = visitors)
+
 
 
 #train:
@@ -121,12 +121,8 @@ Merge with inner_join submission file and data:
 
 #split date from id:  
 sample_submission <- sample_submission %>% 
-                        separate(id, into = c("id","predict_date"), sep=20)  
-
-sample_submission <- sample_submission %>% 
-                        separate(predict_date, into = c("error","predict_date"), sep=1) 
-
-sample_submission <- sample_submission %>% 
+                        separate(id, into = c("id","predict_date"), sep=20) %>% 
+                        separate(predict_date, into = c("error","predict_date"), sep=1) %>%
                         select(-error)
 
 
