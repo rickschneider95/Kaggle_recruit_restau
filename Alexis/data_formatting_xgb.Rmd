@@ -69,8 +69,15 @@ sol2 <- sol2 %>%
 # rbind(data_air,sol2) <== TO APPLY ONLY IF WE CHOOSE THIS SOL°
 ```
 
+<<<<<<< HEAD
 ##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
 ```{r}
+=======
+to deleeeeteeeee:::::
+# AIR :
+
+While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+>>>>>>> Feature-engineering
 
 ```
 
@@ -79,6 +86,7 @@ to deleeeeteeeee:::::
 
 <!-- While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !) -->
 
+<<<<<<< HEAD
 <!-- ## Without reserve info : -->
 
 <!-- ### Adding store info -->
@@ -100,15 +108,29 @@ to deleeeeteeeee:::::
 <!-- date_info <- fread("data/date_info.csv") -->
 <!-- date_info <- date_info %>% -->
 <!--   rename(visit_date = calendar_date) -->
+=======
+### Adding date info
+>>>>>>> Feature-engineering
 
 <!-- air_data <- left_join(air_data,date_info,by="visit_date") %>% -->
 <!--   rename(day_of_the_week_visit = day_of_week) %>% -->
 <!--   rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open -->
 
+<<<<<<< HEAD
 <!-- summary(is.na(air_data)) # No NA's. -->
 <!-- names(air_data) -->
 
 <!-- ``` -->
+=======
+air_data <- left_join(air_data,date_info,by="visit_date") %>%
+  rename(day_of_the_week_visit = day_of_week) %>%
+  rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
+
+summary(is.na(air_data)) # No NA's.
+names(air_data)
+
+```
+>>>>>>> Feature-engineering
 
 ### total visits per date per id:
 
@@ -215,6 +237,17 @@ This is the one hot encoding section (under form of functions) for the variables
 
 # One hot encoding for VISIT day:
 
+<<<<<<< HEAD
+=======
+Now that dataset has been created : 
+```{r}
+air_data <- read.csv("data/air_data.csv")
+date_info <- read.csv("data/date_info.csv")
+date_info <- date_info %>%
+  rename(visit_date = calendar_date)
+```
+
+>>>>>>> Feature-engineering
 Unoptimal, I'll create a better function below separating start of month to end of month ;)
 
 ```{r}
@@ -603,8 +636,12 @@ wknd_transf <- function(data){
 ```
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 ## one hot encoding for welth per area :
+=======
+-## one hot encoding for welth per area :
+>>>>>>> Feature-engineering
 
 One hot encoding according to mean GDP per capita per areas in Japan !
 
@@ -826,8 +863,14 @@ try <- goldd_transf(try)
 try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
+<<<<<<< HEAD
 
 
+=======
+try <- wealth_transf(try)
+try <- lag_transf(try)
+try <- nth_day_trasnf(try)
+>>>>>>> Feature-engineering
 
 try
 
@@ -850,6 +893,41 @@ try <- basic_area_transf(try)
 
 ```
 
+<<<<<<< HEAD
+=======
+# Sample submission feature engineering :
+
+```{r}
+sample_try <- read.csv("data/submission_data.csv") %>% 
+  rename(visit_date = predict_date) %>% 
+  rename(day_of_the_week_visit = day_of_week) %>% 
+  rename(holiday_flg_visit = holiday_flg)
+
+sample_try <- nth_day_trasnf(sample_try)
+sample_try <- vmonth_transf(sample_try)
+sample_try <- vyear_transf(sample_try)
+sample_try <- area_transf(sample_try)
+sample_try <- genre_gr_transf(sample_try)
+sample_try <- vdayweek_transf(sample_try)
+sample_try <- bme_vmonth_transf(sample_try)
+sample_try <- vholflg_transf(sample_try)
+sample_try <- lat_transf(sample_try)
+sample_try <- lon_transf(sample_try)
+sample_try <- goldd_transf(sample_try)
+sample_try <- goldw_transf(sample_try)
+sample_try <- barrest_transf(sample_try)
+sample_try <- wknd_transf(sample_try)
+sample_try <- wealth_transf(sample_try)
+
+lags <- try %>% select(id,visit_date,starts_with("lag"))
+write.csv(lags,"data/lags.csv",row.names = FALSE)
+
+lagss <- read.csv("data/lags.csv")
+
+ssample_try <- lag_transf(sample_try)
+```
+
+>>>>>>> Feature-engineering
 **NOTES**
 
 - Need to one hot code genres! *SOLVED*
@@ -899,6 +977,7 @@ write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 sample_try <- sample_try[,-c(4:9)]
 
@@ -907,6 +986,8 @@ sample_try <- sample_try[,-c(4:9)]
 write.csv(sample_try, "data/data_1h_xgb_samplesubmission.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_samplesubmission.csv")
+>>>>>>> Feature-engineering
+=======
 >>>>>>> Feature-engineering
 
 # Checks :
@@ -921,12 +1002,7 @@ trytry # we good fam
 Seems there is a small problem with the complete csv.
 
 
-
-Louis workspace:
-
-A SUPPRIMER @ALEXIS????
-
-That should be in the complete data set rmd actually, it can be usefull but it's for later improvements.
+That should be in the complete data set rmd actually, it can be useful but it's for later improvements.
 
 # Change dataframe
 ```{r}
@@ -944,10 +1020,6 @@ data <- data %>%
         reserve_date = as.factor(str_sub(as.character(reserve_date), start = 6, end = 7)),
         visit_date=as.factor(str_sub(as.character(visit_date), start = 6, end = 7))) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 
-# dummify the data
-dmy <- dummyVars(" ~ .", data = data)
-trsf <- data.frame(predict(dmy, newdata = customers))
-trsf
 
 one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
 visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
@@ -969,7 +1041,6 @@ datal <- dataset %>%
          latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
          latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 ```
-FIN DE SUPPRESSION POTENTIELLE????
 
 
 These are many different tries.. OBSOLETE BIN:
@@ -1040,8 +1111,6 @@ levels(as.factor(try$visit_date))
 
 
 
-
-
 # IMAGINATION LAND
 
 this where you come to rest your eyes and think of what crazy variables you shall create from this anorexic dataset.. (microdosing not allowed ;) )
@@ -1052,6 +1121,6 @@ names(air_data)
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE*
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
--> create mean visitors per month or and year variable and categorize it if two many levels? (round it!) *OVERFITTING/DONT*
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
