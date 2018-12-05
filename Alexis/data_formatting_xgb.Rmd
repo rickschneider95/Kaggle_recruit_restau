@@ -789,12 +789,7 @@ trytry # we good fam
 Seems there is a small problem with the complete csv.
 
 
-
-Louis workspace:
-
-A SUPPRIMER @ALEXIS????
-
-That should be in the complete data set rmd actually, it can be usefull but it's for later improvements.
+That should be in the complete data set rmd actually, it can be useful but it's for later improvements.
 
 # Change dataframe
 ```{r}
@@ -812,10 +807,6 @@ data <- data %>%
         reserve_date = as.factor(str_sub(as.character(reserve_date), start = 6, end = 7)),
         visit_date=as.factor(str_sub(as.character(visit_date), start = 6, end = 7))) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 
-# dummify the data
-dmy <- dummyVars(" ~ .", data = data)
-trsf <- data.frame(predict(dmy, newdata = customers))
-trsf
 
 one_h$reserve_date <- as.factor(str_sub(as.character(one_h$reserve_date), start = 0, end = 4))
 visit_date <- as.factor(str_sub(as.character(one_h$visit_date), start = 0, end = 4))
@@ -837,7 +828,6 @@ datal <- dataset %>%
          latency_days=ifelse(is.na(reserve_date),0,as.numeric(as.Date(visit_date)-as.Date(reserve_date))), #days between reservation vs visit. if no reservation then will be 0
          latency_people=ifelse(is.na(reserve_visitors),0,visitors-reserve_visitors)) #difference in the number of people from the party between reservation vs visit. if no reservation then will be 0
 ```
-FIN DE SUPPRESSION POTENTIELLE????
 
 
 These are many different tries.. OBSOLETE BIN:
@@ -905,8 +895,6 @@ summary(is.na(try2))
 date_info
 levels(as.factor(try$visit_date))
 ```
-
-
 
 
 
