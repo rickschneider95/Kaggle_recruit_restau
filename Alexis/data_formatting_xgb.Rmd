@@ -739,6 +739,8 @@ lag_transf <- function(data){
            avg_300 = lag(roll_meanr(visitors, 300), 1)
            )
 }
+
+c(1:40,seq(40,180,10)) # Possibility to optimize above function 
 ```
 
 # Works only for data_air (reservation infos)
@@ -932,7 +934,6 @@ sum(is.na(data$day_of_the_week_visit))
 # ONE HOT XGB CSV CREATION CHUNK
 
 ```{r}
-<<<<<<< HEAD
 try <- try[,-c(4:9)]
 
 
@@ -940,7 +941,6 @@ try <- try[,-c(4:9)]
 write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
-=======
 sample_try <- sample_try[,-c(4:9)]
 
 
@@ -948,7 +948,6 @@ sample_try <- sample_try[,-c(4:9)]
 write.csv(sample_try, "data/data_1h_xgb_samplesubmission.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_samplesubmission.csv")
->>>>>>> Feature-engineering
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
@@ -1093,6 +1092,6 @@ air_data
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
--> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE*
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
+-> create mean visitors per month or and year variable and categorize it if two many levels? (round it!) *OVERFITTING/DONT*
