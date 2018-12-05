@@ -18,6 +18,8 @@ library(stringr)
 library(lubridate)
 library(caret)
 library(purrr)
+library(RcppRoll)
+library(zoo)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
@@ -79,8 +81,8 @@ While looking at this I found something weird, since we decided not to use the r
 ### Adding store info
 
 ```{r}
-air_store_info <- fread("data/air_store_info.csv")
-air_visit_data <- fread("data/air_visit_data.csv")
+air_store_info <- read.csv("data/air_store_info.csv")
+air_visit_data <- read.csv("data/air_visit_data.csv")
 air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
   rename(id = air_store_id) %>%
   rename(genre_name = air_genre_name) %>%
@@ -92,7 +94,7 @@ summary(is.na(air_data)) # No NA's.
 ### Adding date info
 
 ```{r}
-date_info <- fread("data/date_info.csv")
+date_info <- read.csv("data/date_info.csv")
 date_info <- date_info %>%
   rename(visit_date = calendar_date)
 
@@ -213,6 +215,9 @@ This is the one hot encoding section (under form of functions) for the variables
 Now that dataset has been created : 
 ```{r}
 air_data <- read.csv("data/air_data.csv")
+date_info <- read.csv("data/date_info.csv")
+date_info <- date_info %>%
+  rename(visit_date = calendar_date)
 ```
 
 Unoptimal, I'll create a better function below separating start of month to end of month ;)
@@ -510,8 +515,6 @@ genre_gr_transf <- function(data){
     map(one_hot)
     data <- data %>% cbind(one_h)
 }
-
-test %>% group_by(genre_name) %>% summarise(total = n()) # Checks to give insight for re-arrangement.
 ```
 
 ## one hot encoding for bar/restaurant separation:
@@ -646,7 +649,7 @@ The rationale behind the next transformation is that days prior and after actual
 #if holiday==1 (there is a holiday) then 2 days before and after transform to 2, creating a new category to take the "holiday feels" effect into account
 test <- air_data %>%
   mutate(holiday_flg_visit = case_when(
-    lead(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
+    (lead(holiday_flg_visit,1)==1)&(holiday_flg_visit==0) ~ 2, #if next row holiday_flg_visit has a certain value, and holiday flag visit has a normal value, then return 2.
     lead(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
     lag(holiday_flg_visit,1)==1&(holiday_flg_visit==0) ~ 2,
     lag(holiday_flg_visit,2)==1&(holiday_flg_visit==0) ~ 2,
@@ -662,7 +665,7 @@ Using time series we improve our prediction significantly by creating the lag va
 lag_transf <- function(data){
   data <- data %>%
     group_by(id) %>% 
-    mutate(lag_1 = lag(visitors, 1),  #looks at the visitors 1 row before the visitors we are currently looking at.
+    mutate(lag_1 = lag(visitors, 1),
            lag_2 = lag(visitors, 2),
            lag_3 = lag(visitors, 3),
            lag_4 = lag(visitors, 4),
@@ -824,10 +827,8 @@ try <- goldw_transf(try)
 try <- barrest_transf(try)
 try <- wknd_transf(try)
 try <- wealth_transf(try)
-try <- nth_day_trasnf(try)
 try <- lag_transf(try)
-
-
+try <- nth_day_trasnf(try)
 
 try
 
@@ -873,7 +874,13 @@ sample_try <- goldw_transf(sample_try)
 sample_try <- barrest_transf(sample_try)
 sample_try <- wknd_transf(sample_try)
 sample_try <- wealth_transf(sample_try)
-sample_try <- lag_transf(sample_try)
+
+lags <- try %>% select(id,visit_date,starts_with("lag"))
+write.csv(lags,"data/lags.csv",row.names = FALSE)
+
+lagss <- read.csv("data/lags.csv")
+
+ssample_try <- lag_transf(sample_try)
 ```
 
 **NOTES**
