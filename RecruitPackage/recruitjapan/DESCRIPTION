@@ -15,7 +15,8 @@ Imports:
     dplyr,
     purrr,
     mltools,
-    data.table
+    data.table,
+    stringr
 Suggests: 
     knitr,
     rmarkdown
