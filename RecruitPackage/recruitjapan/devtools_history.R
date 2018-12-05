@@ -3,3 +3,5 @@ usethis::use_package("dplyr")
 usethis::use_package("purrr")
 usethis::use_package("mltools")
 usethis::use_package("data.table")
+
+usethis::use_package("stringr")

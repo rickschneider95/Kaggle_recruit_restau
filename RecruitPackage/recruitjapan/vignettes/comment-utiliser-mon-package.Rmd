@@ -16,6 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r}
+# library(recruitjap)
+```
+
+
 This package conatins a set of functions to one hot encode categorical variables that are in our complete dataset to feed to the XGBoost algorithm for prediction. 
 
 You will find one hot encoding functions for the basic vars that are given in the datasets from Kaggle that we joined into one complete dataset (air_data). In this data you will find : 
