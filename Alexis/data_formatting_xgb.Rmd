@@ -1063,6 +1063,6 @@ names(air_data)
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE* 
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)
