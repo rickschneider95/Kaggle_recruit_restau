@@ -7,3 +7,6 @@ usethis::use_package("data.table")
 usethis::use_package("stringr")
 
 devtools::document()
+
+usethis::use_package("magrittr")
+

@@ -134,6 +134,7 @@ dn_transf <- function(data){
 #' @return data
 #' @export
 #'
+#' @importFrom zoo as.Date
 #' @examples
 latency_transf <- function(data){
   one_h <- data
