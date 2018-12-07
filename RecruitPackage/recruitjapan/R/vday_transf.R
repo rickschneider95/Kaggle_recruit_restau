@@ -6,10 +6,12 @@
 #' @return returns a one hot encoded dataframe for the day of the visit
 #' @export
 #'
-#' @import dplyr
-#' @import purrr
-#' @import mltools
-#' @import data.table
+#' @importFrom dplyr select
+#' @importFrom purrr map
+#' @importFrom mltools one_hot
+#' @importFrom data.table as.data.table
+#' @importFrom stringr str_sub
+#' @import magrittr
 #' @examples
 #' vday_transf(air_data)
 vday_transf <- function(data){
