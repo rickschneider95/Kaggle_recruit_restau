@@ -1052,6 +1052,26 @@ levels(as.factor(try$visit_date))
 ```
 
 
+New Feature engineering
+```{r}
+#lat+long gives you better results
+names(complete_data)
+complete_data <- complete_data %>%
+  mutate(location=latitude+longitude) %>%
+  select(-latitude,-longitude)
+
+#competition in neighborhood: how many restaurants of the same genre in the same neighbourhood
+#table with count of restaurant types per neighborhood
+
+#of same type 
+names(air_store_info)
+#air_genre_name
+#air_area_name
+df <- df %>%
+  mutate(competition=)
+
+```
+
 
 # IMAGINATION LAND
 
