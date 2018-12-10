@@ -7,11 +7,16 @@
 rholflg_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with binary variable "holiday_flg_reserve" indicating if corresponding date is a holiday in japan}
 }
 \value{
 data
 }
 \description{
 rholflg_transf
+}
+\examples{
+ex <- data.frame(holiday_flg_reserve = c("1","0","1","0","0"))
+rholflg_transf(ex) \%>\% head()
+
 }

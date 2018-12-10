@@ -7,11 +7,16 @@
 rdayweek_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "day_of_the_week_reserve" indicating the day on which reservation was made}
 }
 \value{
 data
 }
 \description{
 rdayweek_transf
+}
+\examples{
+ex <- data.frame(day_of_the_week_reserve = c("Friday","Tuesday","Friday"))
+rdayweek_transf(ex) \%>\% head()
+
 }

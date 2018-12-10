@@ -7,11 +7,15 @@
 nth_day_trasnf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_date" indicating date on which there was a visit in a given restaurant}
 }
 \value{
 data
 }
 \description{
 nth_day_trasnf
+}
+\examples{
+2+2
+
 }

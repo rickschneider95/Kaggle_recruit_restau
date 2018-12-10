@@ -7,11 +7,16 @@
 area_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "area_name" indicating the name of the area in which the restaurant is located (prefecture)}
 }
 \value{
 data
 }
 \description{
 area_transf
+}
+\examples{
+ex <- data.frame(area_name = c("Fukuoka-ken Itoshima-shi Maebarunishi"))
+area_transf(ex) \%>\% head()
+
 }

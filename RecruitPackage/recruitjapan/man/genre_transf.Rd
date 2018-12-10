@@ -7,8 +7,16 @@
 genre_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "genre_name" indicating style of restaurant which was booked/visited}
+}
+\value{
+data
 }
 \description{
 genre_transf
+}
+\examples{
+ex <- data.frame(genre_name = c("Yakiniku/Korean food","Cafe/Sweets","Creative cuisine"))
+genre_transf(ex) \%>\% head()
+
 }

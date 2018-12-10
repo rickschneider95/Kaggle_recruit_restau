@@ -7,11 +7,16 @@
 latency_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "reserve_date" indicating date on which reservation was made}
 }
 \value{
 data
 }
 \description{
 latency_transf
+}
+\examples{
+ex <- data.frame(reserve_date = c("2016-01-13"), visit_date = c("2017-03-01"))
+latency_transf(ex) \%>\% head()
+
 }

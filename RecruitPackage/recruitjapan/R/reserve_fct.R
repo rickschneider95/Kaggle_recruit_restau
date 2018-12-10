@@ -1,11 +1,14 @@
 #' rday_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_date" indicating date of reservation
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(reserve_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' rday_transf(ex) %>% head()
+#'
 rday_transf <- function(data){
   one_h <- data %>%
     select(reserve_date) %>%
@@ -18,12 +21,15 @@ rday_transf <- function(data){
 
 #' rtime_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_time" indicating time of reservation
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(reserve_time = c("13:00:00","02:00:00","15:00:00"))
+#' rtime_transf(ex) %>% head()
+#'
 rtime_transf <- function(data){
   one_h <- data %>%
     select(reserve_time) %>%
@@ -36,12 +42,15 @@ rtime_transf <- function(data){
 
 #' rmonth_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_date" indicating date of reservation
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(reserve_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' rmonth_transf(ex) %>% head()
+#'
 rmonth_transf <- function(data){
   one_h <- data %>%
     select(reserve_date) %>%
@@ -54,12 +63,15 @@ rmonth_transf <- function(data){
 
 #' ryear_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_date" indicating date of reservation
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(reserve_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' ryear_transf(ex) %>% head()
+#'
 ryear_transf <- function(data){
   one_h <- data %>%
     select(reserve_date) %>%
@@ -72,12 +84,15 @@ ryear_transf <- function(data){
 
 #' rdayweek_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "day_of_the_week_reserve" indicating the day on which reservation was made
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(day_of_the_week_reserve = c("Friday","Tuesday","Friday"))
+#' rdayweek_transf(ex) %>% head()
+#'
 rdayweek_transf <- function(data){
   one_h <- data %>%
     select(day_of_the_week_reserve) %>%
@@ -88,12 +103,15 @@ rdayweek_transf <- function(data){
 
 #' rholflg_transf
 #'
-#' @param data
+#' @param data dataframe with binary variable "holiday_flg_reserve" indicating if corresponding date is a holiday in japan
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(holiday_flg_reserve = c("1","0","1","0","0"))
+#' rholflg_transf(ex) %>% head()
+#'
 rholflg_transf <- function(data){
   one_h <- data %>%
     select(holiday_flg_reserve) %>%
@@ -105,14 +123,18 @@ rholflg_transf <- function(data){
 
 #' dn_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_time" indicating time of visit in a given restaurant
 #'
 #' @return data
 #' @export
 #'
 #' @importFrom dplyr mutate
 #' @importFrom dplyr case_when
+#'
 #' @examples
+#' ex <- data.frame(visit_time = c("13:00:00","02:00:00","15:00:00"))
+#' dn_transf(ex) %>% head()
+#'
 dn_transf <- function(data){
   one_h <- data %>%
     select(visit_time) %>%
@@ -129,13 +151,16 @@ dn_transf <- function(data){
 
 #' latency_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_date" indicating date on which reservation was made
 #'
 #' @return data
 #' @export
 #'
 #' @importFrom zoo as.Date
 #' @examples
+#' ex <- data.frame(reserve_date = c("2016-01-13"), visit_date = c("2017-03-01"))
+#' latency_transf(ex) %>% head()
+#'
 latency_transf <- function(data){
   one_h <- data
   one_h <- one_h %>%
@@ -150,12 +175,15 @@ latency_transf <- function(data){
 
 #' bme_rmonth_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "reserve_date" indicating date on which reservation was made
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(reserve_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' bme_rmonth_transf(ex) %>% head()
+#'
 bme_rmonth_transf <- function(data){
   one_h <- data
   one_h$reserve_date <- as.integer(str_sub(as.character(one_h$reserve_date), start = 9, end = 10))

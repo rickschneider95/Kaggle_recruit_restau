@@ -7,11 +7,15 @@
 lag_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "id" the identifier of each different restaurant in the data, and the quantitative variable "visitors" indicating the amount of people who visited}
 }
 \value{
 data
 }
 \description{
 lag_transf
+}
+\examples{
+2+2
+
 }

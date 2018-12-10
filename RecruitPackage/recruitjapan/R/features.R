@@ -1,11 +1,14 @@
 #' area_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "area_name" indicating the name of the area in which the restaurant is located (prefecture)
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(area_name = c("Fukuoka-ken Itoshima-shi Maebarunishi"))
+#' area_transf(ex) %>% head()
+#'
 area_transf <- function(data){
   one_h <- data %>%
     select(area_name) %>%
@@ -21,12 +24,15 @@ area_transf <- function(data){
 
 #' bme_vmonth_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit in a given restaurant
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' bme_vmonth_transf(ex) %>% head()
+#'
 bme_vmonth_transf <- function(data){
   one_h <- data %>%
     select(visit_date) %>%
@@ -41,12 +47,15 @@ bme_vmonth_transf <- function(data){
 
 #' genre_gr_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "genre_name" indicating style of restaurant which was booked/visited
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(genre_name = c("Yakiniku/Korean food","Cafe/Sweets","Creative cuisine"))
+#' genre_transf(ex) %>% head()
+#'
 genre_gr_transf <- function(data){
   one_h <- data %>%
     select(genre_name) %>%
@@ -73,12 +82,15 @@ genre_gr_transf <- function(data){
 
 #' barrest_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "genre_name" indicating style of restaurant which was booked/visited
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(genre_name = c("Yakiniku/Korean food","Cafe/Sweets","Creative cuisine"))
+#' genre_transf(ex) %>% head()
+#'
 barrest_transf <- function(data){
   one_h <- data %>%
     select(genre_name) %>%
@@ -104,13 +116,16 @@ barrest_transf <- function(data){
 
 #' goldw_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit
 #'
 #' @return data
 #' @export
 #'
 #' @importFrom lubridate ymd
 #' @examples
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' goldw_transf(ex) %>% head()
+#'
 goldw_transf <- function(data){
   one_h <- data %>%
     mutate(visit_date = ymd(visit_date)) %>%
@@ -126,12 +141,15 @@ goldw_transf <- function(data){
 
 #' goldd_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' goldd_transf(ex) %>% head()
+#'
 goldd_transf <- function(data){
   one_h <- data %>%
     mutate(visit_date = ymd(visit_date)) %>%
@@ -153,12 +171,15 @@ goldd_transf <- function(data){
 
 #' wknd_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "day_of_the_week_visit" indicating the day on which there was a visit for a given restaurant
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(day_of_the_week_visit = c("Friday","Tuesday","Friday"))
+#' wknd_transf(ex) %>% head()
+#'
 wknd_transf <- function(data){
   one_h <- data %>%
     mutate(wknd = case_when(day_of_the_week_visit == "Friday" |
@@ -174,12 +195,15 @@ wknd_transf <- function(data){
 
 #' wealth_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "area_name" indicating the name of the area in which the restaurant is located (prefecture)
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(area_name = c("Fukuoka-ken Itoshima-shi Maebarunishi"))
+#' basic_area_transf(ex) %>% head()
+#'
 wealth_transf <- function(data){
   one_h <- data %>%
     mutate(area_name = as.character(area_name)) %>%
@@ -200,13 +224,15 @@ wealth_transf <- function(data){
 
 #' nth_day_trasnf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date on which there was a visit in a given restaurant
 #'
 #' @return data
 #' @export
 #'
 #' @importFrom dplyr left_join
 #' @examples
+#' 2+2
+#'
 nth_day_trasnf <- function(data){
   days <- c(1:365,1:152)
   dates <- date_info %>%
@@ -218,14 +244,17 @@ nth_day_trasnf <- function(data){
 
 #' lag_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "id" the identifier of each different restaurant in the data, and the quantitative variable "visitors" indicating the amount of people who visited
 #'
 #' @return data
 #' @export
 #'
 #' @importFrom RcppRoll roll_meanr
 #' @importFrom dplyr lag
+#' @importFrom dplyr group_by
 #' @examples
+#' 2+2
+#'
 lag_transf <- function(data){
   data <- data %>%
     group_by(id) %>%

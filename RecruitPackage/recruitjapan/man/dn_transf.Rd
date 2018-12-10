@@ -7,11 +7,16 @@
 dn_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_time" indicating time of visit in a given restaurant}
 }
 \value{
 data
 }
 \description{
 dn_transf
+}
+\examples{
+ex <- data.frame(visit_time = c("13:00:00","02:00:00","15:00:00"))
+dn_transf(ex) \%>\% head()
+
 }

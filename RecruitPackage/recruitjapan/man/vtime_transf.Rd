@@ -7,11 +7,16 @@
 vtime_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_time" indicating time of visit}
 }
 \value{
 data
 }
 \description{
 vtime_transf
+}
+\examples{
+ex <- data.frame(visit_time = c("13:00:00","02:00:00","15:00:00"))
+vtime_transf(ex) \%>\% head()
+
 }

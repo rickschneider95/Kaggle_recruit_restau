@@ -7,8 +7,16 @@
 vholflg_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with binary variable "holiday_flg_visit" indicating if date of visit was on a holiday in japan}
+}
+\value{
+data
 }
 \description{
 vholflg_transf
+}
+\examples{
+ex <- data.frame(holiday_flg_visit = c("1","0","1","0","0"))
+vholflg_transf(ex) \%>\% head()
+
 }
