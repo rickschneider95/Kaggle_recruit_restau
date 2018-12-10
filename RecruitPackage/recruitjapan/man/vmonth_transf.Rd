@@ -7,11 +7,16 @@
 vmonth_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_date" indicating date of visit}
 }
 \value{
 data
 }
 \description{
 vmonth_transf
+}
+\examples{
+ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+vmonth_transf(ex) \%>\% head()
+
 }

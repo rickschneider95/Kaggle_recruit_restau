@@ -2,13 +2,21 @@
 % Please edit documentation in R/visit_fct.R
 \name{lon_transf}
 \alias{lon_transf}
-\title{lon_transf}
+\title{lat_transf}
 \usage{
 lon_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with quantitative variable "latitude" indicating lat coordinates of a given restaurant}
+}
+\value{
+data
 }
 \description{
-lon_transf
+lat_transf
+}
+\examples{
+ex <- data.frame(longitude = c(139.7719,139.0363,139.6982))
+lon_transf(ex) \%>\% head()
+
 }

@@ -7,11 +7,16 @@
 rtime_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "reserve_time" indicating time of reservation}
 }
 \value{
 data
 }
 \description{
 rtime_transf
+}
+\examples{
+ex <- data.frame(reserve_time = c("13:00:00","02:00:00","15:00:00"))
+rtime_transf(ex) \%>\% head()
+
 }

@@ -7,11 +7,16 @@
 goldd_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_date" indicating date of visit}
 }
 \value{
 data
 }
 \description{
 goldd_transf
+}
+\examples{
+ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+goldd_transf(ex) \%>\% head()
+
 }

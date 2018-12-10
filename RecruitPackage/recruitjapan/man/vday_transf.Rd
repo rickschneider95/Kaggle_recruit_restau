@@ -7,14 +7,16 @@
 vday_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "visit_date" indicating date of visit}
 }
 \value{
-returns a one hot encoded dataframe for the day of the visit
+data
 }
 \description{
 vday_transf
 }
 \examples{
-vday_transf(air_data)
+ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+vday_transf(ex) \%>\% head()
+
 }

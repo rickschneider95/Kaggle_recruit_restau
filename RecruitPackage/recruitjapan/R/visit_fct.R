@@ -1,9 +1,8 @@
 #' vday_transf
 #'
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit
 #'
-#' @param data
-#'
-#' @return returns a one hot encoded dataframe for the day of the visit
+#' @return data
 #' @export
 #'
 #' @importFrom dplyr select
@@ -12,8 +11,11 @@
 #' @importFrom data.table as.data.table
 #' @importFrom stringr str_sub
 #' @import magrittr
+#'
 #' @examples
-#' vday_transf(air_data)
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' vday_transf(ex) %>% head()
+#'
 vday_transf <- function(data){
   one_h <- data %>%
     select(visit_date) %>%
@@ -26,12 +28,15 @@ vday_transf <- function(data){
 
 #' vtime_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_time" indicating time of visit
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(visit_time = c("13:00:00","02:00:00","15:00:00"))
+#' vtime_transf(ex) %>% head()
+#'
 vtime_transf <- function(data){
   one_h <- data %>%
     select(visit_time) %>%
@@ -44,12 +49,15 @@ vtime_transf <- function(data){
 
 #' vmonth_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' vmonth_transf(ex) %>% head()
+#'
 vmonth_transf <- function(data){
   one_h <- data %>%
     select(visit_date) %>%
@@ -62,12 +70,15 @@ vmonth_transf <- function(data){
 
 #' vyear_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "visit_date" indicating date of visit
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(visit_date = c("2016-01-13","2016-04-02","2017-02-11"))
+#' vyear_transf(ex) %>% head()
+#'
 vyear_transf <- function(data){
   one_h <- data %>%
     select(visit_date) %>%
@@ -80,16 +91,19 @@ vyear_transf <- function(data){
 
 #' basic_area_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "area_name" indicating the name of the area in which the restaurant is located (prefecture)
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(area_name = c("Fukuoka-ken Itoshima-shi Maebarunishi"))
+#' basic_area_transf(ex) %>% head()
+#'
 basic_area_transf <- function(data){
   one_h <- data %>%
     select(area_name) %>%
-    map(as.character) %>%
+    mutate(area_name = as.character(area_name)) %>%
     mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
                                  TRUE ~ area_name)) %>% ## This is just an error in the data set
     map(as.factor) %>%
@@ -100,12 +114,15 @@ basic_area_transf <- function(data){
 
 #' vdayweek_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "day_of_the_week_visit" indicating the day on which there was a visit
 #'
 #' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(day_of_the_week_visit = c("Friday","Tuesday","Friday"))
+#' vdayweek_transf(ex) %>% head()
+#'
 vdayweek_transf <- function(data){
   one_h <- data %>%
     select(day_of_the_week_visit) %>% # Already factor
@@ -116,13 +133,16 @@ vdayweek_transf <- function(data){
 
 #' lat_transf
 #'
-#' @param data
+#' @param data dataframe with quantitative variable "latitude" indicating lat coordinates of a given restaurant
 #'
 #' @return data
 #' @export
 #'
 #' @examples
-lat_transf <- function(data){
+#' ex <- data.frame(longitude = c(139.7719,139.0363,139.6982))
+#' lon_transf(ex) %>% head()
+#'
+lon_transf <- function(data){
   one_h <- data %>%
     select(longitude) %>%
     map(round, digits = 1) %>%
@@ -134,13 +154,16 @@ lat_transf <- function(data){
 
 #' lon_transf
 #'
-#' @param data
+#' @param data dataframe with quantitative variable "longitude" indicating lon coordinates of a given restaurant
 #'
-#' @return
+#' @return data
 #' @export
 #'
 #' @examples
-lon_transf <- function(data){
+#' ex <- data.frame(latitude = c(34.66474,34.75695,35.67492))
+#' lat_transf(ex) %>% head()
+#'
+lat_transf <- function(data){
   one_h <- data %>%
     select(latitude) %>%
     map(round, digits = 1) %>%
@@ -152,12 +175,15 @@ lon_transf <- function(data){
 
 #' vholflg_transf
 #'
-#' @param data
+#' @param data dataframe with binary variable "holiday_flg_visit" indicating if date of visit was on a holiday in japan
 #'
-#' @return
+#' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(holiday_flg_visit = c("1","0","1","0","0"))
+#' vholflg_transf(ex) %>% head()
+#'
 vholflg_transf <- function(data){
   one_h <- data %>%
     select(holiday_flg_visit) %>%
@@ -169,12 +195,15 @@ vholflg_transf <- function(data){
 
 #' genre_transf
 #'
-#' @param data
+#' @param data dataframe with categorical variable "genre_name" indicating style of restaurant which was booked/visited
 #'
-#' @return
+#' @return data
 #' @export
 #'
 #' @examples
+#' ex <- data.frame(genre_name = c("Yakiniku/Korean food","Cafe/Sweets","Creative cuisine"))
+#' genre_transf(ex) %>% head()
+#'
 genre_transf <- function(data){
   one_h <- data %>%
     select(genre_name) %>%

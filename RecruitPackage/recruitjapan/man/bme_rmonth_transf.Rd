@@ -7,11 +7,16 @@
 bme_rmonth_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "reserve_date" indicating date on which reservation was made}
 }
 \value{
 data
 }
 \description{
 bme_rmonth_transf
+}
+\examples{
+ex <- data.frame(reserve_date = c("2016-01-13","2016-04-02","2017-02-11"))
+bme_rmonth_transf(ex) \%>\% head()
+
 }

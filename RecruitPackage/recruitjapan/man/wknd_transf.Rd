@@ -7,11 +7,16 @@
 wknd_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "day_of_the_week_visit" indicating the day on which there was a visit for a given restaurant}
 }
 \value{
 data
 }
 \description{
 wknd_transf
+}
+\examples{
+ex <- data.frame(day_of_the_week_visit = c("Friday","Tuesday","Friday"))
+wknd_transf(ex) \%>\% head()
+
 }

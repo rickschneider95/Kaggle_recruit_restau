@@ -10,3 +10,9 @@ devtools::document()
 
 usethis::use_package("magrittr")
 
+usethis::use_pipe()
+
+remotes::install_github("Thinkr-open/attachment")
+attachment::att_to_description()
+
+devtools::check()

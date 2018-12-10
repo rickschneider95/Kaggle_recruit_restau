@@ -7,11 +7,16 @@
 vdayweek_transf(data)
 }
 \arguments{
-\item{data}{}
+\item{data}{dataframe with categorical variable "day_of_the_week_visit" indicating the day on which there was a visit}
 }
 \value{
 data
 }
 \description{
 vdayweek_transf
+}
+\examples{
+ex <- data.frame(day_of_the_week_visit = c("Friday","Tuesday","Friday"))
+vdayweek_transf(ex) \%>\% head()
+
 }
