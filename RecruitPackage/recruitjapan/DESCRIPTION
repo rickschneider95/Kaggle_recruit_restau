@@ -15,8 +15,11 @@ Imports:
     dplyr,
     purrr,
     mltools,
-    data.table
+    data.table,
+    stringr,
+    magrittr
 Suggests: 
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+RoxygenNote: 6.1.1
