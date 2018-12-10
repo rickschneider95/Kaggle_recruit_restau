@@ -3,15 +3,21 @@ library(shiny)
 library(shinyTime)
 library(timeDate)
 library(leaflet)
+library(tidyverse)
+library(RColorBrewer)
 
 df <- read.csv("data/air_data.csv",encoding="UTF-8") 
 df <- df %>% 
   mutate(visit_month= months(as.Date(visit_date))) %>% 
   mutate(visit_month=as.factor(visit_month))
+
+df <- df %>% 
+  mutate_if(is.na(visit_time),visit_month= as.factor(months(as.Date(visit_date)))) 
+
 ## if visit_time = NA pour ne pas avoir de doublon
-## ordre des factors plot
 
 ###################################
+
 # Sort factor levels arbitrarily
 sortLvls.fnc <- function(oldFactor, levelOrder) {
   if(!is.factor(oldFactor)) stop("The variable you want to reorder isn't a factor.")
@@ -30,6 +36,7 @@ sortLvls.fnc <- function(oldFactor, levelOrder) {
 
 df$day_of_the_week_visit <- sortLvls.fnc(df$day_of_the_week_visit, c(2, 6, 7, 5, 1,3,4))
 df$visit_month <- sortLvls.fnc(df$visit_month, c(5,4,9,2,8,7,6,1,12,11,10,3))
+
 ###########################################################
 
 
@@ -183,12 +190,10 @@ ui <- fluidPage(
 server <- function(input, output) {
   
 
-  library(tidyverse)
-  library(RColorBrewer)
   
 
   
-  
+
   count <- function (df,time,daterange){
     quo_time <- rlang::sym(time)
     

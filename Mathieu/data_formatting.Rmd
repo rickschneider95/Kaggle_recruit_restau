@@ -188,3 +188,29 @@ write.csv(df3, file="data/air_data.csv", row.names = FALSE)
 
 ```
 
+```{r}
+df <- read.csv("data/air_data.csv",encoding="UTF-8") 
+df <- df %>% 
+  mutate( visit_month =  case_when(is.na(visit_time) ~ visit_date)) %>% 
+  mutate(visit_month= as.factor(months(as.Date(visit_month))))
+
+levels(df$visit_month)
+
+df %>% filter(is.na(visit_month))
+
+
+# OLD WORKING SOLUTION
+df <- df %>% 
+  mutate(visit_month= months(as.Date(visit_date))) %>% 
+  mutate(visit_month=as.factor(visit_month))
+
+
+```
+
+```{r}
+prediction <- read.csv("data/sub.csv",encoding="UTF-8") 
+
+prediction %>% separate(id, into = c('id','bin', 'visit_date'), sep = c(20,21)) %>% select(-bin) %>%
+mutate(visit_data=as.Date(visit_date)) %>% filter(visit_date=='2017-05-10')
+```
+
