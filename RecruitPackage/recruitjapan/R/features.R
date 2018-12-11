@@ -222,26 +222,6 @@ wealth_transf <- function(data){
   data <- data %>% cbind(one_h)
 }
 
-#' nth_day_trasnf
-#'
-#' @param data dataframe with categorical variable "visit_date" indicating date on which there was a visit in a given restaurant
-#'
-#' @return data
-#' @export
-#'
-#' @importFrom dplyr left_join
-#' @examples
-#' 2+2
-#'
-nth_day_trasnf <- function(data){
-  days <- c(1:365,1:152)
-  dates <- date_info %>%
-    cbind(days) %>%
-    select(visit_date,days)
-  data <- data %>%
-    left_join(dates, by = "visit_date")
-}
-
 #' lag_transf
 #'
 #' @param data dataframe with categorical variable "id" the identifier of each different restaurant in the data, and the quantitative variable "visitors" indicating the amount of people who visited

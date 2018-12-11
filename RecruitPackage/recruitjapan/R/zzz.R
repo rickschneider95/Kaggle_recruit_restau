@@ -19,8 +19,6 @@ globalVariables(c(
   "latency_days",
   # lon_transf.R
   "longitude",
-  # nth_day_trasnf.R
-  "date_info",
   # vdayweek_transf.R
   "day_of_the_week_visit",
   # rdayweek_transf.R,

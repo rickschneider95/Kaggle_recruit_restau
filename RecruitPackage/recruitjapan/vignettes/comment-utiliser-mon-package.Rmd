@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-# library(recruitjap)
+library(recruitjap)
 ```
 
 This package is dedicated to forecasting visits in a certain set of restaurants in Japan, the original data is drawn from two reservation platforms Air and Hpg. The objective here is to predict future visits (for a specific set of id's in a specific time frame) based on previous visits for a larger set of restaurants. 
@@ -65,8 +65,8 @@ We decided to keep the functions that could encode the uncomplete reservation va
 Hot encodes every day in a month, so you'll get a 1 in the one hot for day.01 when observation is at 01/01/2016.
 
 ```{r}
-# test <- air_data
-# test <- vday_transf(test)
+test <- system.file("cleaned_csv","air_data.csv", package = "recruitjap")
+test <- vday_transf(test)
 ```
 
 ## One hot encoding for visit MONTH:
@@ -248,14 +248,6 @@ Basing ourselves on the distribution of wealth per area in Japan (GDP per capita
 
 ```{r}
 # test <- wealth_transf(test)
-```
-
-### extract nth day of the year
-
-Here we create a var giving which day in the 365 days in a year a specific date comes in, we do not need to one hot encode it since it's already a quantitative variable.
-
-```{r}
-# test <- nth_day_trasnf(test)
 ```
 
 ##4. Features only working for the data including reservation information:
