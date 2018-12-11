@@ -11,8 +11,13 @@ library(tidyr)
 library(data.table)
 ```
 
+On the kaggle competition website, we had a series of different datasets. Various dataset contained various information, such as the number of visits, the style of restaurant which was visited, the name of the area in which it was located... And these information were retrieved from two different reservation platforms (HPG and AIR). The problem is we had info that was found in with of the platforms but not in the other, so if we joined all the data we had, for various id's and various dates (and sometimes some obeservations which were in common) we found ourselves with a lot of NA's.
 
-This file will be divided into 3 section:
+Also, Kaggle asks us to submit a our predicition results on a very specific subset of id's and dates (that aren't in the data we train or test our algorithim on). From this specific set we only get the id, the visit date and a column filled with zeros (which are to be replaced by our results). From these info we could retrieve at least the location, area name and genre from the id, and the day of the week (monday,tuesday,..), if it was a holiday from the visit date. But we could not at all retrieve any info on reservation time, visit time, number of reservations (and not actual number of visits, which can differ) etc. And a particularity of the xgboost algorithim is that the data on which you want to predict must have exactly the same set of variables as the one on which it trained, which made some of the datasets on Kaggle unusuble for us. 
+We still think that there might be another way of predicting number of visitors, hence this information that is unusable for us now might be in the future, so we kept them for further improvements.
+
+So in the 1) of this Rmd, you'll find our approach when considering only the data which can also be retrieved for the sample submission, and in 2) the at-the-moment unusable data. In 3) we show how we retrieved all the info necessary for the one hot encoding to feed our algorithim to then submit on Kaggle.
+
 1)generate a csv-file merging all the data from air into one file
 2)generate a csv-file that merges all the data we have from Kaggle into 1 file
 3)generate the sample submission data set in order to create our prediction
@@ -23,7 +28,7 @@ This file will be divided into 3 section:
 
 # AIR :
 
-While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
+While looking at this we found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
 ## Without reserve info :
 
@@ -57,7 +62,7 @@ names(air_data)
 ```
 
 
-### Generate excel file:
+### Generate csv file:
 
 export and output as air_data.csv
 ```{r}

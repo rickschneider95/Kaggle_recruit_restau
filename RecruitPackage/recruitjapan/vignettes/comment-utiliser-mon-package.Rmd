@@ -134,6 +134,14 @@ path_complete_data <- system.file("cleaned_csv", "complete_data.csv", package = 
 try <- read.csv(path_complete_data)
 ```
 
+### One hot encoding for reserve YEAR:
+
+and for reservation year...
+
+```{r}
+try <- ryear_transf(try)
+```
+
 ### One hot encoding for RESERVE holiday flag
 
 One hot encodes reservation dates that are holidays in Japan, not very insisghtfull but we'll still consider it:
@@ -178,15 +186,11 @@ try <- rmonth_transf(try)
 
 All of the following are one hot encoding or new variables created from the original vars in our dataset to improve the XGB prediction!
 
-Difference is huge, we get 15 levels with the above function vs 130 from the basic one.
-
-### one hot encoding for VISIT start/end of the month :
-
-The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
-
 ```{r}
-test <- bme_vmonth_transf(test)
+test <- read.csv(path_air_data)
 ```
+
+Difference is huge, we get 15 levels with the above function vs 130 from the basic one.
 
 ### One hot encoding (Better version) AREA:
 
@@ -202,6 +206,14 @@ Here we regroup genres that seems similar, for example we consider that Karoake,
 
 ```{r}
 test <- genre_gr_transf(test)
+```
+
+### one hot encoding for VISIT start/end of the month :
+
+The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+
+```{r}
+test <- bme_vmonth_transf(test)
 ```
 
 ### one hot encoding for bar/restaurant separation:
@@ -236,7 +248,7 @@ We saw on the EDA's that visits rised on weekend days (Friday to Sunday) which s
 test <- wknd_transf(test)
 ```
 
-### one hot encoding for welth per area :
+### one hot encoding for wealth per area :
 
 Basing ourselves on the distribution of wealth per area in Japan (GDP per capita) and given most of the id's are situated in the various departments of major cities in japan we create a varaible wealth categorizing the overall wealth of population given a certain area and one hot encode it according to mean GDP per capita per areas in Japan !
 
@@ -244,15 +256,11 @@ Basing ourselves on the distribution of wealth per area in Japan (GDP per capita
 test <- wealth_transf(test)
 ```
 
-### One hot encoding for reserve YEAR:
-
-and for reservation year...
+##4. Features only working for the data including reservation information:
 
 ```{r}
-try <- ryear_transf(try)
+try <- read.csv(path_complete_data)
 ```
-
-##4. Features only working for the data including reservation information:
 
 Again given the same problem regarding reservation information we can't run these on our sample submission, although we keep them for any further progress we could potentially make if we find a way to integrate the reservation data:
 
@@ -278,21 +286,6 @@ Same as for visit, but concerning reservation date! Surely combines well with la
 
 ```{r}
 try <- bme_rmonth_transf(try)
-```
-
-### one hot encoding for nb visits/reservation
-
-Needs improvement, we get around 200 new columns from one hot encoding so we should create categories:
-- small rest <= 20
-- small/medium > 20 <= 50
-- medium > 50 <= 90
-- medium/large >90 <= 150
-- large > 150
-
-we can change according to preferences but here's the baseline of the function! (need to use case_when):
-
-```{r}
-try <- average_transf(try)
 ```
 
 ## Conclusion
