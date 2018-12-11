@@ -16,3 +16,6 @@ remotes::install_github("Thinkr-open/attachment")
 attachment::att_to_description()
 
 devtools::check()
+
+usethis::use_package("conflicted")
+attachment::att_to_description()
