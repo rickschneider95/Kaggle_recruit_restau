@@ -104,7 +104,7 @@ basic_area_transf <- function(data){
   one_h <- data %>%
     select(area_name) %>%
     mutate(area_name = as.character(area_name)) %>%
-    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "\u008Csaka-fu Prefecture Osaka None",
                                  TRUE ~ area_name)) %>% ## This is just an error in the data set
     map(as.factor) %>%
     map(as.data.table) %>%

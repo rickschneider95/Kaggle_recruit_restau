@@ -16,6 +16,8 @@ data
 nth_day_trasnf
 }
 \examples{
-2+2
+date_info <- system.file("cleaned_csv","date_info.csv",package = "recruitjap")
+ex <- data.frame(id = c("id1"), visit_date = c("2016-01-01"))
+nth_day_trasnf(ex)
 
 }
