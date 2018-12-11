@@ -16,6 +16,6 @@ data
 lag_transf
 }
 \examples{
-2+2
+ex <- data.frame(id = "air1", visitors = 32)
 
 }

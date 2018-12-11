@@ -13,7 +13,7 @@ area_transf <- function(data){
   one_h <- data %>%
     select(area_name) %>%
     mutate(area_name = as.character(area_name)) %>%
-    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "\u008Csaka-fu Prefecture Osaka None",
                                  TRUE ~ area_name)) %>% # error in the data
     map(str_sub, start = 0, end = 8) %>%
     map(as.factor) %>%
@@ -207,12 +207,12 @@ wknd_transf <- function(data){
 wealth_transf <- function(data){
   one_h <- data %>%
     mutate(area_name = as.character(area_name)) %>%
-    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
+    mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "\u008Csaka-fu Prefecture Osaka None",
                                  TRUE ~ area_name)) %>% # error in the data
     mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>%
-    mutate(wealth = case_when(area_name == "Tōkyō-to" ~ "High",
-                              area_name == "Shizuoka" | area_name == "Hyōgo-ke" | area_name == "Ōsaka-fu" ~ "Middle/High",
-                              area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaidō" ~ "Middle",
+    mutate(wealth = case_when(area_name == "T\u008Dky\u008D-to" ~ "High",
+                              area_name == "Shizuoka" | area_name == "Hy\u008Dgo-ke" | area_name == "\u008Csaka-fu" ~ "Middle/High",
+                              area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaid\u008D" ~ "Middle",
                               area_name == "Fukuoka-" ~ "Middle/Low",
                               TRUE ~ "Low")) %>%
     select(wealth) %>%
@@ -220,26 +220,6 @@ wealth_transf <- function(data){
     map(as.data.table) %>%
     map(one_hot)
   data <- data %>% cbind(one_h)
-}
-
-#' nth_day_trasnf
-#'
-#' @param data dataframe with categorical variable "visit_date" indicating date on which there was a visit in a given restaurant
-#'
-#' @return data
-#' @export
-#'
-#' @importFrom dplyr left_join
-#' @examples
-#' 2+2
-#'
-nth_day_trasnf <- function(data){
-  days <- c(1:365,1:152)
-  dates <- date_info %>%
-    cbind(days) %>%
-    select(visit_date,days)
-  data <- data %>%
-    left_join(dates, by = "visit_date")
 }
 
 #' lag_transf
@@ -253,7 +233,7 @@ nth_day_trasnf <- function(data){
 #' @importFrom dplyr lag
 #' @importFrom dplyr group_by
 #' @examples
-#' 2+2
+#' ex <- data.frame(id = "air1", visitors = 32)
 #'
 lag_transf <- function(data){
   data <- data %>%

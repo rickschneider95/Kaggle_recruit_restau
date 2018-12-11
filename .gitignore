@@ -7,3 +7,8 @@ Augustin/data
 Louis/data
 shiny_app/data
 Alexis/eda_hpg_store.Rmd
+RecruitPackage/recruitjapan/inst/cleaned_csv/air_data.csv
+RecruitPackage/recruitjapan/inst/cleaned_csv/complete_data.csv
+RecruitPackage/recruitjapan/inst/shiny_csv/sub_shiny.csv
+RecruitPackage/recruitjapan/inst/shiny_csv/air_data_shiny.csv
+

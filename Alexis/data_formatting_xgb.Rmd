@@ -18,6 +18,8 @@ library(stringr)
 library(lubridate)
 library(caret)
 library(purrr)
+library(RcppRoll)
+library(zoo)
 ```
 
 This file will be dedicated to formatting the complete_data.csv file to feed to the xgb model.
@@ -69,22 +71,32 @@ sol2 <- sol2 %>%
 # rbind(data_air,sol2) <== TO APPLY ONLY IF WE CHOOSE THIS SOL°
 ```
 
-##WILL HAVE TO CHECK IF THE LATENCY-PEOPLE IN AIR IS SIGNIFICANTLY DIFFERENT FROM 0!
-```{r}
-
-```
-
 to deleeeeteeeee:::::
 # AIR :
 
 While looking at this I found something weird, since we decided not to use the reservation info since we can't get them from the sample submission, we only need the air_visit_data and air_store_info and potentially the HPG data if we assume that the reserve visitors actually correspond to the real visitors (everyone showed up !)
 
+## Without reserve info :
+
+### Adding store info
+
+```{r}
+air_store_info <- read.csv("data/air_store_info.csv")
+air_visit_data <- read.csv("data/air_visit_data.csv")
+air_data <- full_join(air_visit_data,air_store_info, by = "air_store_id") %>%
+  rename(id = air_store_id) %>%
+  rename(genre_name = air_genre_name) %>%
+  rename(area_name = air_area_name)
+
+summary(is.na(air_data)) # No NA's.
+```
+
 ### Adding date info
 
 ```{r}
-air_data <- left_join(air_data,date_info,by="visit_date") %>%
-  rename(day_of_the_week_visit = day_of_week) %>%
-  rename(holiday_flg_visit = holiday_flg) # CAREFULL, here it's an inner join, some days there were just no restaurants open
+date_info <- read.csv("data/date_info.csv")
+date_info <- date_info %>%
+  rename(visit_date = calendar_date)
 
 air_data <- left_join(air_data,date_info,by="visit_date") %>%
   rename(day_of_the_week_visit = day_of_week) %>%
@@ -92,8 +104,8 @@ air_data <- left_join(air_data,date_info,by="visit_date") %>%
 
 summary(is.na(air_data)) # No NA's.
 names(air_data)
-```
 
+```
 
 ### total visits per date per id:
 
@@ -200,12 +212,18 @@ This is the one hot encoding section (under form of functions) for the variables
 
 # One hot encoding for VISIT day:
 
-Now that dataset has been created :
+Now that dataset has been created : 
 ```{r}
 air_data <- read.csv("data/air_data.csv")
-date_info <- read.csv("data/date_info.csv")
-date_info <- date_info %>%
-  rename(visit_date = calendar_date)
+# date_info <- read.csv("data/date_info.csv")
+# days <- c(1:365,1:152)
+# dayss <- date_info %>%
+#   cbind(days) %>% 
+#   rename(visit_date = calendar_date)
+#   select(visit_date,days)
+# air_data <- air_data %>% left_join(dayss, by = "visit_date")
+# write.csv(try, "data/air_data.csv", row.names = FALSE)
+# read.csv("data/air_data.csv") %>% head()
 ```
 
 Unoptimal, I'll create a better function below separating start of month to end of month ;)
@@ -250,6 +268,7 @@ vtime_transf <- function(data){
     map(one_hot)
   data <- data %>% cbind(one_h)
 }
+air_data
 ```
 
 # One hot encoding for RESERVE time:
@@ -503,8 +522,6 @@ genre_gr_transf <- function(data){
     map(one_hot)
     data <- data %>% cbind(one_h)
 }
-
-test %>% group_by(genre_name) %>% summarise(total = n()) # Checks to give insight for re-arrangement.
 ```
 
 ## one hot encoding for bar/restaurant separation:
@@ -602,18 +619,18 @@ One hot encoding according to mean GDP per capita per areas in Japan !
 ```{r}
 wealth_transf <- function(data){
   one_h <- data %>%
-    mutate(area_name = as.character(area_name)) %>%
+    mutate(area_name = as.character(area_name)) %>% 
     mutate(area_name = case_when(area_name == "Osaka Prefecture Osaka None" ~ "Ōsaka-fu Prefecture Osaka None",
                                                                        TRUE ~ area_name)) %>% # error in the data
-    mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>%
+    mutate(area_name = str_sub(area_name, start = 0, end = 8)) %>% 
     mutate(wealth = case_when(area_name == "Tōkyō-to" ~ "High",
                               area_name == "Shizuoka" | area_name == "Hyōgo-ke" | area_name == "Ōsaka-fu" ~ "Middle/High",
                               area_name == "Niigata-" | area_name == "Miyagi-k" | area_name == "Hokkaidō" ~ "Middle",
                               area_name == "Fukuoka-" ~ "Middle/Low",
-                              TRUE ~ "Low")) %>%
-    select(wealth) %>%
-    map(as.factor) %>%
-    map(as.data.table) %>%
+                              TRUE ~ "Low")) %>% 
+    select(wealth) %>% 
+    map(as.factor) %>% 
+    map(as.data.table) %>% 
     map(one_hot)
   data <- data %>% cbind(one_h)
 }
@@ -625,10 +642,10 @@ wealth_transf <- function(data){
 nth_day_trasnf <- function(data){
   days <- c(1:365,1:152)
   dates <- date_info %>%
-    cbind(days) %>%
+    cbind(days) %>% 
     select(visit_date,days)
   data <- data %>%
-    left_join(dates, by = "visit_date")
+    left_join(dates, by = "visit_date") 
 }
 ```
 
@@ -647,14 +664,14 @@ test <- air_data %>%
   ))
 ```
 
-# Lag transform:
+# Lag transform: 
 
-Using time series we improve our prediction significantly by creating the lag variable :
+Using time series we improve our prediction significantly by creating the lag variable : 
 
 ```{r}
 lag_transf <- function(data){
   data <- data %>%
-    group_by(id) %>%
+    group_by(id) %>% 
     mutate(lag_1 = lag(visitors, 1),
            lag_2 = lag(visitors, 2),
            lag_3 = lag(visitors, 3),
@@ -712,9 +729,8 @@ lag_transf <- function(data){
            )
 }
 
-c(1:40,seq(40,180,10)) # Possibility to optimize above function
+c(1:40,seq(40,180,10)) # Possibility to optimize above function 
 ```
->>>>>>> Feature-engineering
 
 # Works only for data_air (reservation infos)
 
@@ -845,9 +861,9 @@ try <- basic_area_transf(try)
 # Sample submission feature engineering :
 
 ```{r}
-sample_try <- read.csv("data/submission_data.csv") %>%
-  rename(visit_date = predict_date) %>%
-  rename(day_of_the_week_visit = day_of_week) %>%
+sample_try <- read.csv("data/submission_data.csv") %>% 
+  rename(visit_date = predict_date) %>% 
+  rename(day_of_the_week_visit = day_of_week) %>% 
   rename(holiday_flg_visit = holiday_flg)
 
 sample_try <- nth_day_trasnf(sample_try)
@@ -922,13 +938,6 @@ try <- try[,-c(4:9)]
 write.csv(try, "data/data_1h_xgb_CORRECT_4.csv", row.names = FALSE)
 
 trytry <- read.csv("data/data_1h_xgb_CORRECT_4.csv")
-sample_try <- sample_try[,-c(4:9)]
-
-
-#CHANFE LAST NUMBER EVERY NEW VERSION:
-write.csv(sample_try, "data/data_1h_xgb_samplesubmission.csv", row.names = FALSE)
-
-trytry <- read.csv("data/data_1h_xgb_samplesubmission.csv")
 
 # Checks :
 n_occur <- data.frame(table(trytry$id,trytry$visit_date))
@@ -1061,6 +1070,6 @@ names(air_data)
 
 -> seperate Bars from Restaurants ? *DONE*
 -> select certain days/months to be more important? golden week !! *DONE*
--> certain areas of japan richer than others? (get wealth distribution plots of japan !!)
--> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!)
+-> certain areas of japan richer than others? (get wealth distribution plots of japan !!) *DONE* 
+-> create week-end variable to put more weight on consumption on weekends? (eda showed this was true!) *DONE*
 -> create mean visitors per month or and year variable and categorize it if two many levels? (round it!)

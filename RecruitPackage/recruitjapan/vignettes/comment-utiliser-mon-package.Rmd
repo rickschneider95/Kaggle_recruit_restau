@@ -17,11 +17,15 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-# library(recruitjap)
+library(recruitjap)
 ```
 
 This package is dedicated to forecasting visits in a certain set of restaurants in Japan, the original data is drawn from two reservation platforms Air and Hpg. The objective here is to predict future visits (for a specific set of id's in a specific time frame) based on previous visits for a larger set of restaurants. 
-In this Rmd you'll first encounter the set of functions that were created to prepare the data for forecasting, as forecasting is done with the XGB algorithim combined with time series which needs a particular form of data (only quantitative or binary variables). Then in the second part you will find a guide thorugh our shiny app on how to use it.
+
+In this Rmd you'll first encounter the set of functions that were created to prepare the data for forecasting, as forecasting is done with the XGB algorithim combined with time series which needs a particular form of data (only quantitative or binary variables). Then in the second part you will find a guide thorugh our shiny app on how to use it.$
+
+If you want to know how we chose among the various datasets that were on the kaggle online site, check the complete_data_set.Rmd where we explain all the different approaches we considered as there were various possibilites as to what data we should or should not take into account.
+
 Enjoy!
 
 #I. Data formatting
@@ -65,16 +69,9 @@ We decided to keep the functions that could encode the uncomplete reservation va
 Hot encodes every day in a month, so you'll get a 1 in the one hot for day.01 when observation is at 01/01/2016.
 
 ```{r}
-# test <- air_data
-# test <- vday_transf(test)
-```
-
-## One hot encoding for visit MONTH:
-
-Same principle but for the 12 months of a year.
-
-```{r}
-# test <- vmonth_transf(test)
+path_air_data <- system.file("cleaned_csv","air_data.csv", package = "recruitjap")
+test <- read.csv(path_air_data)
+test <- vday_transf(test)
 ```
 
 ### One hot encoding for visit YEAR:
@@ -82,15 +79,7 @@ Same principle but for the 12 months of a year.
 Again the same principle but for all the years considered in our data.
 
 ```{r}
-# test <- vyear_transf(test)
-```
-
-### One hot encoding AREA:
-
-This is the one hot encoder function for the original area name variable. I don't recommend using at as it create way too many entries, instead in the FEATURE ENGINEERING part of this rmd that you'll find below, there is an adapted function which keeps all the info while generating way less entries. Still, here's a glimpse at the transformation on the original variable:
-
-```{r}
-# test <- basic_area_transf(test)
+test <- vyear_transf(test)
 ```
 
 ### One hot encoding for DAY OF THE WEEK VISIT:
@@ -98,7 +87,7 @@ This is the one hot encoder function for the original area name variable. I don'
 Hot encodes for all the days in the week, if it's a monday then var.monday will take value 1 etc...
 
 ```{r}
-# test <- vdayweek_transf(test)
+test <- vdayweek_transf(test)
 ```
 
 ### One hot encoding for LONGITUDE & LATITUDE:
@@ -106,8 +95,8 @@ Hot encodes for all the days in the week, if it's a monday then var.monday will 
 Hot encodes all the different longitude/latitude coordinates we have in our data, there are redundant coordinates for some of the id's so they are approximative in our dataset!
 
 ```{r}
-# test <- lat_transf(test)
-# test <- lon_transf(test)
+test <- lat_transf(test)
+test <- lon_transf(test)
 ```
 
 ### One hot encoding for VISIT holiday flag:
@@ -115,61 +104,34 @@ Hot encodes all the different longitude/latitude coordinates we have in our data
 hot encodes as 1 if the date considered is holiday in Japan!
 
 ```{r}
-# test <- vholflg_transf(test)
+test <- vholflg_transf(test)
 ```
 
-### One hot encoding for GENRE :
+### One hot encoding for visit MONTH:
+
+Same principle but for the 12 months of a year.
+
+```{r}
+test <- vmonth_transf(test)
+```
+
+### Basic hot encoding functions:
+
+The following two functions are special cases, they are two functions that one hot encode for all the different levels of two varaibles (genre and area) hence create way too many columns, we thus decided to create functions which could keep the info while creating a reasonable amount of hot encoded columns.
+
+#### One hot encoding for GENRE :
 
 We get a lot of different levels for genre which is normal, but from the eda of the air csv files we see that some genres in the data are almost unvisited. It could be interesting to get only the significant genres (at least more than a thousand visits). You'll find that function in the feature engineering part, in any case here's the function that hot encodes all the different genres that are present in the air data: 
 
-```{r}
-# test <- genre_transf(test)
-```
+#### One hot encoding AREA:
+
+This is the one hot encoder function for the original area name variable. I don't recommend using at as it create way too many entries, instead in the FEATURE ENGINEERING part of this rmd that you'll find below, there is an adapted function which keeps all the info while generating way less entries.
 
 ##2. One-hot encoding on reserve variables unaccessible for now:
 
 ```{r}
-# try <- read.csv("complete_data_final.csv")
-```
-
-### One hot encoding for RESERVE day:
-
-Same as visit, we one hot encode each day in a month for reservation dates:
-
-```{r}
-# try <- rday_transf(try)
-```
-
-### One hot encoding for RESERVE time:
-
-In the reservation info we also have the time at which reservations were made for specific id's, we extract that info and one hot encode for all its levels (00:23):
-
-```{r}
-# try <- rtime_transf(try)
-```
-
-### One hot encoding for reserve MONTH:
-
-Same principle as visit, hot encode month of reservation:
-
-```{r}
-# try <- rmonth_transf(try)
-```
-
-### One hot encoding for reserve YEAR:
-
-and for reservation year...
-
-```{r}
-# try <- ryear_transf(try)
-```
-
-### One hot encoding for DAY OF THE WEEK RESERVE:
-
-Hot encoding all days of the week for reservation dates:
-
-```{r}
-# try <- rdayweek_transf(try)
+path_complete_data <- system.file("cleaned_csv", "complete_data.csv", package = "recruitjap")
+try <- read.csv(path_complete_data)
 ```
 
 ### One hot encoding for RESERVE holiday flag
@@ -177,20 +139,44 @@ Hot encoding all days of the week for reservation dates:
 One hot encodes reservation dates that are holidays in Japan, not very insisghtfull but we'll still consider it:
 
 ```{r}
-# try <- rholflg_transf(try)
+try <- rholflg_transf(try)
+```
+
+### One hot encoding for RESERVE day:
+
+Same as visit, we one hot encode each day in a month for reservation dates:
+
+```{r}
+try <- rday_transf(try)
+```
+
+### One hot encoding for DAY OF THE WEEK RESERVE:
+
+Hot encoding all days of the week for reservation dates:
+
+```{r}
+try <- rdayweek_transf(try)
+```
+
+### One hot encoding for RESERVE time:
+
+In the reservation info we also have the time at which reservations were made for specific id's, we extract that info and one hot encode for all its levels (00:23):
+
+```{r}
+try <- rtime_transf(try)
+```
+
+### One hot encoding for reserve MONTH:
+
+Same principle as visit, hot encode month of reservation:
+
+```{r}
+try <- rmonth_transf(try)
 ```
 
 ##3 One-hot encoding on feature engineered vairables:
 
 All of the following are one hot encoding or new variables created from the original vars in our dataset to improve the XGB prediction!
-
-### One hot encoding (Better version) AREA:
-
-There are many different levels for area names, although they all appartain to one particular city. I'll regroup observations appartaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encode on this smaller amount of levels.
-
-```{r}
-# test <- area_transf(test)
-```
 
 Difference is huge, we get 15 levels with the above function vs 130 from the basic one.
 
@@ -199,7 +185,15 @@ Difference is huge, we get 15 levels with the above function vs 130 from the bas
 The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
 
 ```{r}
-# test <- bme_vmonth_transf(test)
+test <- bme_vmonth_transf(test)
+```
+
+### One hot encoding (Better version) AREA:
+
+There are many different levels for area names, although they all appartain to one particular city. I'll regroup observations appartaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encode on this smaller amount of levels.
+
+```{r}
+test <- area_transf(test)
 ```
 
 ### one hot encoding for regrouped GENRE :
@@ -207,7 +201,7 @@ The idea behind this function is that costumers might be more encline to go to t
 Here we regroup genres that seems similar, for example we consider that Karoake, Party and Karaoke/Party fall within the same category, this allows to create less levels when hot encoding them!
 
 ```{r}
-# test <- genre_gr_transf(test)
+test <- genre_gr_transf(test)
 ```
 
 ### one hot encoding for bar/restaurant separation:
@@ -215,7 +209,7 @@ Here we regroup genres that seems similar, for example we consider that Karoake,
 Here we create a var that distinguishes between stores that are either Bars or Restaurants and then one hot encode them:
 
 ```{r}
-# test <- barrest_transf(test)
+test <- barrest_transf(test)
 ```
 
 ### One hot encoding for golden week:
@@ -223,7 +217,7 @@ Here we create a var that distinguishes between stores that are either Bars or R
 The golden week in Japan is a week with a series of holidays were Japan's economy slows down and consumption rises. It's a big event going on from the 28th of April to 6th of may so we hot encode it to get a var returning a one if the date falls within that time lapse:
 
 ```{r}
-# test <- goldw_transf(test)
+test <- goldw_transf(test)
 ```
 
 ### One hot encoding for holiday days of the golden week
@@ -231,7 +225,7 @@ The golden week in Japan is a week with a series of holidays were Japan's econom
 Same principle as above although we specifically take out the precise date of holidays:
 
 ```{r}
-# test <- goldd_transf(test)
+test <- goldd_transf(test)
 ```
 
 ### One hot encoding for WEEKEND :
@@ -239,7 +233,7 @@ Same principle as above although we specifically take out the precise date of ho
 We saw on the EDA's that visits rised on weekend days (Friday to Sunday) which seems logical, so we hot encode for dates that correspond to weekend days:
 
 ```{r}
-# test <- wknd_transf(test)
+test <- wknd_transf(test)
 ```
 
 ### one hot encoding for welth per area :
@@ -247,15 +241,15 @@ We saw on the EDA's that visits rised on weekend days (Friday to Sunday) which s
 Basing ourselves on the distribution of wealth per area in Japan (GDP per capita) and given most of the id's are situated in the various departments of major cities in japan we create a varaible wealth categorizing the overall wealth of population given a certain area and one hot encode it according to mean GDP per capita per areas in Japan !
 
 ```{r}
-# test <- wealth_transf(test)
+test <- wealth_transf(test)
 ```
 
-### extract nth day of the year
+### One hot encoding for reserve YEAR:
 
-Here we create a var giving which day in the 365 days in a year a specific date comes in, we do not need to one hot encode it since it's already a quantitative variable.
+and for reservation year...
 
 ```{r}
-# test <- nth_day_trasnf(test)
+try <- ryear_transf(try)
 ```
 
 ##4. Features only working for the data including reservation information:
@@ -267,7 +261,7 @@ Again given the same problem regarding reservation information we can't run thes
 By counting the number of services for each date for each ID we can know how many reservations there were in a day. We can then also derive the average number of people per reservations:
 
 ```{r}
-# try <- dn_transf(try)
+try <- dn_transf(try)
 ```
 
 ### one hot encoding for LATENCY
@@ -275,7 +269,7 @@ By counting the number of services for each date for each ID we can know how man
 Here we create a var computing the difference in days between the date of reservation and the actual visit to get an idea of how fancy a restaurant is. The idea behind this is that a restaurant being booked a month in advance is surely very popular (we even saw a booking more than a year in advance in the EDA's!)
 
 ```{r}
-# try <- latency_transf(try)
+try <- latency_transf(try)
 ```
 
 ### one hot encoding for RESERVE start/end of the month :
@@ -283,7 +277,7 @@ Here we create a var computing the difference in days between the date of reserv
 Same as for visit, but concerning reservation date! Surely combines well with latency var. 
 
 ```{r}
-# try <- bme_rmonth_transf(try)
+try <- bme_rmonth_transf(try)
 ```
 
 ### one hot encoding for nb visits/reservation
@@ -298,8 +292,12 @@ Needs improvement, we get around 200 new columns from one hot encoding so we sho
 we can change according to preferences but here's the baseline of the function! (need to use case_when):
 
 ```{r}
-# try <- average_transf(try)
+try <- average_transf(try)
 ```
+
+## Conclusion
+
+Once all the categorical variables were one hot encoded and we only had binary or quantitative variables we fed it to our xgboost program on this data that went through a test/train split. You'll find the results of our predictions vs the true values of visitors in the shiny app. 
 
 #II. Shiny app:
 
