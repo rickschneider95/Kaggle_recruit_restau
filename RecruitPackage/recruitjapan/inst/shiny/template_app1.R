@@ -131,8 +131,13 @@ ui <- fluidPage(
                                                 dateRangeInput("daterange", "Date range:",
                                                                start = as.Date('2016-01-01'),
                                                                end = as.Date('2017-05-31'),
+<<<<<<< HEAD
                                                                min = as.Date('2016-01-01'),
                                                                max = as.Date('2017-05-31')
+=======
+                                                               min=as.Date('2016-01-01'),
+                                                               max=as.Date('2017-05-31')
+>>>>>>> 07b2e27097a4e78338648d5d29e6c10e80da65d8
                                                                )
                                                  ),
 
@@ -180,8 +185,13 @@ ui <- fluidPage(
                                                       dateRangeInput("daterange2", "Date range:",
                                                                      start = as.Date('2016-01-01'),
                                                                      end = as.Date('2017-05-31'),
+<<<<<<< HEAD
                                                                      min = as.Date('2016-01-01'),
                                                                      max = as.Date('2017-05-31')
+=======
+                                                                     min=as.Date('2016-01-01'),
+                                                                     max=as.Date('2017-05-31')
+>>>>>>> 07b2e27097a4e78338648d5d29e6c10e80da65d8
                                                       )
                                      ),
 
@@ -235,8 +245,13 @@ ui <- fluidPage(
                                              dateRangeInput("daterange4", "Date range:",
                                                             start = as.Date('2016-01-01'),
                                                             end = as.Date('2017-05-31'),
+<<<<<<< HEAD
                                                             min = as.Date('2016-01-01'),
                                                             max = as.Date('2017-05-31')
+=======
+                                                            min=as.Date('2016-01-01'),
+                                                            max=as.Date('2017-05-31')
+>>>>>>> 07b2e27097a4e78338648d5d29e6c10e80da65d8
                                                     )
                                                 ),
                                     conditionalPanel(condition = "input.time4 =='visit_month'",
