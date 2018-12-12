@@ -322,3 +322,8 @@ The dataset we were given contained only data up to april 22nd inclusive. Howeve
 This tab is that predicted data. Although it cannot be said to be truthful in the barest sense of the word, it is a good prediction of what can be expected. The data in this tab is forecasting future visits. 
 It is presented in a similar way as the first tab, but with reduced capabilities due to the small timeframe of the data in question. Namely:
 The user can pick an id and a date, and we output the predicted number of visitors for that restaurant on that day.
+
+```{r}
+shinyapp()
+```
+

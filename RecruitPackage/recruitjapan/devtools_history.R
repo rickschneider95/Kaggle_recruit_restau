@@ -19,3 +19,6 @@ devtools::check()
 
 usethis::use_package("conflicted")
 attachment::att_to_description()
+
+usethis::use_package("shiny")
+attachment::att_to_description()

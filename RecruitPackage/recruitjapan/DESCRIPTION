@@ -31,7 +31,6 @@ License: GPL-3
 Depends: 
     R (>= 3.5.0)
 Imports: 
-    base,
     data.table,
     dplyr,
     lubridate,
@@ -39,6 +38,7 @@ Imports:
     mltools,
     purrr,
     RcppRoll,
+    shiny,
     stringr,
     zoo
 Suggests: 
