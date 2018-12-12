@@ -223,7 +223,8 @@ air_data <- read.csv("data/air_data.csv")
 #   select(visit_date,days)
 # air_data <- air_data %>% left_join(dayss, by = "visit_date")
 # write.csv(try, "data/air_data.csv", row.names = FALSE)
-# read.csv("data/air_data.csv") %>% head()
+# test <- read.csv("data/air_data.csv")
+# test
 ```
 
 Unoptimal, I'll create a better function below separating start of month to end of month ;)

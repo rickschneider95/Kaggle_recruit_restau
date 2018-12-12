@@ -32,5 +32,7 @@ globalVariables(c(
   # wknd_transf.R
   "wknd",
   # rtime_transf.R
-  "reserve_time"
+  "reserve_time",
+  # shinyapp.R
+  "dir"
 ))

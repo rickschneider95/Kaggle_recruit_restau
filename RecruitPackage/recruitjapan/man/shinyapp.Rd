@@ -4,7 +4,7 @@
 \alias{shinyapp}
 \title{shinyapp_jap}
 \usage{
-shinyapp(dir)
+shinyapp()
 }
 \value{
 shinyapp of our project
@@ -13,6 +13,7 @@ shinyapp of our project
 shinyapp_jap
 }
 \examples{
-shinyapp
+dir <- system.file("shiny","template_app1.R", package = "recruitjap")
+# shinyapp(dir) don't run or it just won't stop the connexion!
 
 }

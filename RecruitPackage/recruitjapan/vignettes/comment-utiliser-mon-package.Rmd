@@ -324,7 +324,7 @@ It is presented in a similar way as the first tab, but with reduced capabilities
 The user can pick an id and a date, and we output the predicted number of visitors for that restaurant on that day.
 
 ```{r}
-dir <- system.file("shiny","template_app1.R", package = "recruitjap")
-shinyapp(dir)
+# shinyapp()
+# stopApp(returnValue = invisible())
 ```
 
