@@ -4,7 +4,7 @@
 \alias{shinyapp}
 \title{shinyapp_jap}
 \usage{
-shinyapp()
+shinyapp(dir)
 }
 \value{
 shinyapp of our project

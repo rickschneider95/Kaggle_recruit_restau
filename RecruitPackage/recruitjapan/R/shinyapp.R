@@ -4,14 +4,14 @@
 #' @export
 #'
 #' @import shiny
+#' @import shinyTime
 #' @examples
 #' shinyapp
 #'
-shinyapp <- function() {
-  appDir <- system.file("shiny", "template_app1.R", package = "recruitjap")
-  if (appDir == "") {
+shinyapp <- function(dir) {
+  if (dir == "") {
     stop("Could not find example directory. Try re-installing mypackage.", call. = FALSE)
   }
 
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(dir, display.mode = "normal")
 }

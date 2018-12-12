@@ -39,6 +39,7 @@ Imports:
     purrr,
     RcppRoll,
     shiny,
+    shinyTime,
     stringr,
     zoo
 Suggests: 

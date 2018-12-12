@@ -21,4 +21,6 @@ usethis::use_package("conflicted")
 attachment::att_to_description()
 
 usethis::use_package("shiny")
+
+install.packages("shinyTime")
 attachment::att_to_description()
