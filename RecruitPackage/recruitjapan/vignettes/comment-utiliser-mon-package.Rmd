@@ -22,35 +22,37 @@ library(recruitjap)
 
 This package is dedicated to forecasting visits in a certain set of restaurants in Japan, the original data is drawn from two reservation platforms Air and Hpg. The objective here is to predict future visits (for a specific set of id's in a specific time frame) based on previous visits for a larger set of restaurants. 
 
-In this Rmd you'll first encounter the set of functions that were created to prepare the data for forecasting, as forecasting is done with the XGB algorithim combined with time series which needs a particular form of data (only quantitative or binary variables). Then in the second part you will find a guide thorugh our shiny app on how to use it.$
+This Rmd is composed of several parts. 
+Firstly, you will encounter the set of functions used to clean the data, join the tables and perform feature engineering, along with explanations. This will be fed into the XGB algorithm, coupled with time series (this required a particular format for the data(quantitative or binary variables only)). 
+Secondly, you will find a user guide of our shiny app.
 
-If you want to know how we chose among the various datasets that were on the kaggle online site, check the complete_data_set.Rmd where we explain all the different approaches we considered as there were various possibilites as to what data we should or should not take into account.
+If you want to know how we chose among the various datasets that were on the Kaggle competition, check the complete_data_set.Rmd where we explain all the different approaches we considered as there were various possibilites as to what data we should or should not take into account.
 
 Enjoy!
 
 #I. Data formatting
 
-The original datasets were in different files as well, so a little rearrangement was needed. To see how we joined the different datasets into one, check the complete_dataset.Rmd file. In any case The shiny app will run on the complete data and the final predicted dataset (after formatting, after running prediction).
+The original datasets were in different files, so a little rearrangement was needed. To see how we joined the different datasets into one, check the complete_dataset.Rmd file. In any case The shiny app will run on the complete data and the final predicted dataset (after formattin and running the predictions).
 
-You will find one hot encoding functions for the basic vars that are given in the datasets from Kaggle that we joined into one complete dataset (air_data), you can or not go through this part if you want to get an idea of how we proceeded to create new variables.
+You will find one hot encoding functions for the basic vars that are given in the datasets from Kaggle that we joined into one complete dataset (air_data), you can go through this part if you want to get an idea of how we proceeded to encode the variables, while keeping flexibility by doing them each at once, instead of using a function that would one-hot encode all at once.
 
 In the original data you will find : 
 
 - id : Identifier for each restaurant in our data
-- visit_date : All dates were each restaurant had visitors
-- genre_name : The style of the restaurant (it can be japanese food, a bar, a karaoke ...)
+- visit_date : dates when visitors came to the
+- genre_name : The style of the restaurant (eg: japanese food, bar, karaoke ...)
 - area_name : It's approximate location (generally located in one of the prefectures of a big city in Japan)
 - holiday_flg_visit : variable taking value one when visit_date is a holiday in Japan 
-- day_of_the_week_visit : Indicates to which day of the week corresponds the date (ex: Sunday, Tuesday, ...)
-- longitude : approximate longitude coordinates for each restaurant
-- latitude : approximate latitude coordinates for each restaurant
+- day_of_the_week_visit : what day of the week the visitor came (eg: Sunday, Tuesday, ...)
+- longitude : approximate longitude coordinates for each restaurant (somewhat similar for the venues so that reverse engineering was not possible (looking at restaurant that we know are doing well now and take that into account for instance))
+- latitude : approximate latitude coordinates for each restaurant (somewhat similar for the venues so that reverse engineering was not possible (looking at restaurant that we know are doing well now and take that into account for instance))
 
-There will also be a set of functions that can be used on more data we have regarding reservations, reservation times, data from another reservation platform (HPG) although these data are useless for our Kaggle submission. This is due to the fact that from the sample submission we have only 3 variables : 
+There will also be a set of functions that can be used on more data we have regarding reservations, reservation times, data from another reservation platform (HPG) (although these data are useless for our Kaggle submission). This is due to the fact that from the sample submission we have only 3 variables : 
  - id : an id for which to forecast
  - visit_date : a date for which to forecast
  - visitors : the variable to predict
  
-From these 3 variables unfortunately we can only retrieve the varaibles mentionned above which correspond to the joining of 3 datasets imported from kaggle (air_visit_data.csv, air_store_info.csv, date_info.csv).
+From these 3 variables unfortunately we can only use the join of 3 datasets imported from Kaggle (air_visit_data.csv, air_store_info.csv, date_info.csv).
 This is why all these functions are directly created for our complete data, all the reserve functions that do not work on this complete dataset are listed as such and are kept for future improvements if the reservation data for the sample submission is made available. 
 
 You will find this vignette organised as follows :
@@ -60,13 +62,13 @@ You will find this vignette organised as follows :
 3. Functions for the variables created by our feature engineering team (vars created from base vars) 
 4. Functions for the variables created by our feature engineering team working only on enhanced (not working) dataset 
 
-We decided to keep the functions that could encode the uncomplete reservation varaibles as a way to improve this package in the future.
+We decided to keep the functions that could encode the uncomplete reservation variables as a way to improve this package in the future.
 
 ##1. One-hot encoding on basic vars for air_data
 
 ### One hot encoding for VISIT day:
 
-Hot encodes every day in a month, so you'll get a 1 in the one hot for day.01 when observation is at 01/01/2016.
+One-Hot encodes every day in a month, so you'll get a 1 in the one hot for day 01 when observation is at 01/01/2016.
 
 ```{r}
 path_air_data <- system.file("cleaned_csv","air_data.csv", package = "recruitjap")
@@ -76,7 +78,7 @@ test <- vday_transf(test)
 
 ### One hot encoding for visit YEAR:
 
-Again the same principle but for all the years considered in our data.
+One-Hot encodes all the year we have in our dataset:
 
 ```{r}
 test <- vyear_transf(test)
@@ -84,7 +86,7 @@ test <- vyear_transf(test)
 
 ### One hot encoding for DAY OF THE WEEK VISIT:
 
-Hot encodes for all the days in the week, if it's a monday then var.monday will take value 1 etc...
+One-Hot encodes the days in the week (eg: if it's a Monday then var.monday will take value 1 etc)
 
 ```{r}
 test <- vdayweek_transf(test)
@@ -92,8 +94,7 @@ test <- vdayweek_transf(test)
 
 ### One hot encoding for LONGITUDE & LATITUDE:
 
-Hot encodes all the different longitude/latitude coordinates we have in our data, there are redundant coordinates for some of the id's so they are approximative in our dataset!
-
+One-Hot encodes all the different longitude/latitude coordinates we have in our data, remember they are approximate in our dataset for anonimity!
 ```{r}
 test <- lat_transf(test)
 test <- lon_transf(test)
@@ -101,7 +102,7 @@ test <- lon_transf(test)
 
 ### One hot encoding for VISIT holiday flag:
 
-hot encodes as 1 if the date considered is holiday in Japan!
+1 if the date considered is holiday in Japan, 0 if it is not!
 
 ```{r}
 test <- vholflg_transf(test)
@@ -117,17 +118,17 @@ test <- vmonth_transf(test)
 
 ### Basic hot encoding functions:
 
-The following two functions are special cases, they are two functions that one hot encode for all the different levels of two varaibles (genre and area) hence create way too many columns, we thus decided to create functions which could keep the info while creating a reasonable amount of hot encoded columns.
+The following two functions are special cases, they are two functions that one hot encode for all the different levels of two variables (genre and area). Since there are many different genres and areas, this creates an unreasonable number of columns, putting the data in higher dimensions and making our model a lot more complex than it needs to be. To paliate that issue, we decided to create functions which could keep as much info as possible while creating a reasonable amount of one-hot encoded columns.
 
 #### One hot encoding for GENRE :
 
-We get a lot of different levels for genre which is normal, but from the eda of the air csv files we see that some genres in the data are almost unvisited. It could be interesting to get only the significant genres (at least more than a thousand visits). You'll find that function in the feature engineering part, in any case here's the function that hot encodes all the different genres that are present in the air data: 
+We get a lot of different levels for genre which is normal, but from the EDA of the air csv files we see that some genres in the data are almost unvisited. It could be interesting to get only the significant genres (at least more than a thousand visits), and group genres in more general groups. You'll find that function in the feature engineering Rmd. 
 
 #### One hot encoding AREA:
 
-This is the one hot encoder function for the original area name variable. I don't recommend using at as it create way too many entries, instead in the FEATURE ENGINEERING part of this rmd that you'll find below, there is an adapted function which keeps all the info while generating way less entries.
+This is the one-hot encoder function for the original area name variable. We don't recommend using it as it creates too many entries (as said before), and the we adapted the function to keep relevant information while generating a reasonable number of entries.
 
-##2. One-hot encoding on reserve variables unaccessible for now:
+##2. One-hot encoding on reserve variables:
 
 ```{r}
 path_complete_data <- system.file("cleaned_csv", "complete_data.csv", package = "recruitjap")
@@ -136,15 +137,13 @@ try <- read.csv(path_complete_data)
 
 ### One hot encoding for reserve YEAR:
 
-and for reservation year...
-
 ```{r}
 try <- ryear_transf(try)
 ```
 
 ### One hot encoding for RESERVE holiday flag
 
-One hot encodes reservation dates that are holidays in Japan, not very insisghtfull but we'll still consider it:
+One hot encodes reservation dates that are holidays in Japan, not very insisghtful but we'll still consider it:
 
 ```{r}
 try <- rholflg_transf(try)
@@ -160,15 +159,13 @@ try <- rday_transf(try)
 
 ### One hot encoding for DAY OF THE WEEK RESERVE:
 
-Hot encoding all days of the week for reservation dates:
-
 ```{r}
 try <- rdayweek_transf(try)
 ```
 
 ### One hot encoding for RESERVE time:
 
-In the reservation info we also have the time at which reservations were made for specific id's, we extract that info and one hot encode for all its levels (00:23):
+In the reservation info we also have the time at which reservations were made, we extract that info and one hot encode for all its levels (00:23):
 
 ```{r}
 try <- rtime_transf(try)
@@ -176,13 +173,13 @@ try <- rtime_transf(try)
 
 ### One hot encoding for reserve MONTH:
 
-Same principle as visit, hot encode month of reservation:
+Same principle as visit, one-hot encodes month of reservation:
 
 ```{r}
 try <- rmonth_transf(try)
 ```
 
-##3 One-hot encoding on feature engineered vairables:
+##3 One-hot encoding on feature engineered variables:
 
 All of the following are one hot encoding or new variables created from the original vars in our dataset to improve the XGB prediction!
 
@@ -194,23 +191,23 @@ Difference is huge, we get 15 levels with the above function vs 130 from the bas
 
 ### One hot encoding (Better version) AREA:
 
-There are many different levels for area names, although they all appartain to one particular city. I'll regroup observations appartaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encode on this smaller amount of levels.
+There are many different levels for area names, although they all belong to one particular city. Regrouping observations pertaining to the same big city (Tokyo, Kyoto, Osaka, etc...) and onehot encoding on this smaller amount of levels is a better approach.
 
 ```{r}
 test <- area_transf(test)
 ```
 
-### one hot encoding for regrouped GENRE :
+### One-Hot encoding for regrouped GENRE :
 
-Here we regroup genres that seems similar, for example we consider that Karoake, Party and Karaoke/Party fall within the same category, this allows to create less levels when hot encoding them!
+Here we regroup genres that seem similar, for example we consider that Karoake, Party and Karaoke/Party fall within the same category, this allows to create less levels when hot encoding them!
 
 ```{r}
 test <- genre_gr_transf(test)
 ```
 
-### one hot encoding for VISIT start/end of the month :
+### One-Hot encoding for VISIT start/end of the month :
 
-The idea behind this function is that costumers might be more encline to go to the restaurant in the first part of the month  rather than in the middel or at the end. So instead of creating dummies for each possible day in the month I'll just categorize them acoording to their situation in the month:
+The thinking behind this function is that customers might be more enclined to go to the restaurant in the first part of the month rather than in the middle or at the end, just because of when Japanese people typically receive their salaries: at the end of the month! So instead of creating dummies for each possible day in the month we will categorize them according to their position in the month:
 
 ```{r}
 test <- bme_vmonth_transf(test)
@@ -226,7 +223,7 @@ test <- barrest_transf(test)
 
 ### One hot encoding for golden week:
 
-The golden week in Japan is a week with a series of holidays were Japan's economy slows down and consumption rises. It's a big event going on from the 28th of April to 6th of may so we hot encode it to get a var returning a one if the date falls within that time lapse:
+The golden week in Japan is a week with a series of holidays where Japan's economy slows down and consumption rises. It's a big event going on from the 28th of April to the 6th of May so we hot encode it to get a var returning a one if the date falls within that time lapse.
 
 ```{r}
 test <- goldw_transf(test)
@@ -242,7 +239,7 @@ test <- goldd_transf(test)
 
 ### One hot encoding for WEEKEND :
 
-We saw on the EDA's that visits rised on weekend days (Friday to Sunday) which seems logical, so we hot encode for dates that correspond to weekend days:
+We saw on the EDA's that visits rised on weekend days (Friday to Sunday) which seems logical, so we one-hot encode for dates that correspond to weekend days:
 
 ```{r}
 test <- wknd_transf(test)
@@ -250,7 +247,7 @@ test <- wknd_transf(test)
 
 ### one hot encoding for wealth per area :
 
-Basing ourselves on the distribution of wealth per area in Japan (GDP per capita) and given most of the id's are situated in the various departments of major cities in japan we create a varaible wealth categorizing the overall wealth of population given a certain area and one hot encode it according to mean GDP per capita per areas in Japan !
+Basing ourselves on the distribution of wealth per area in Japan (GDP per capita), we create a wealth variable categorizing the overall wealth of the population given a certain area and one hot encode it according to mean GDP per capita per areas in Japan !
 
 ```{r}
 test <- wealth_transf(test)
@@ -274,7 +271,7 @@ try <- dn_transf(try)
 
 ### one hot encoding for LATENCY
 
-Here we create a var computing the difference in days between the date of reservation and the actual visit to get an idea of how fancy a restaurant is. The idea behind this is that a restaurant being booked a month in advance is surely very popular (we even saw a booking more than a year in advance in the EDA's!)
+Here we create a var computing the difference in days between the date of reservation and the actual visit to get an idea of how fancy a restaurant is. The idea behind this is that a restaurant being booked a month in advance is surely very popular (we even saw a booking more than a year in advance in the EDA's!). those popular restaurants will operating close to full capacity during the popular times of the year, if not all throughout the year!
 
 ```{r}
 try <- latency_transf(try)
@@ -305,10 +302,10 @@ You will find in our shiny app 5 tabs on top the intro :
 In this app, we give the user an in-depth analysis of the frequentation of restaurants in Japan. Our app can give more or less specific information, depending on the preferences of the user.
 
 First, the time overview tab:
-Here, we don't differentiate between different restaurants. The user can enter different dates, be it months, days of week, or any partition of the year. The user can choose what time period to choose, and we display the frequentation numbers for all restaurants in japan. Here of course the y-axis is very large numbers, as it is the number of visitors in all restaurants for a given "time property".
+Here, we don't differentiate between different restaurants. The user can enter different dates, be it months, days of week, or any partition of the year. The user can choose what time period to choose, and we display the frequentation numbers for all restaurants in Japan. Here of course the y-axis is very large numbers, as it is the number of visitors in all restaurants for a given "time property".
 
 Second, the per restaurant tab:
-Here, the user can specify the restaurant. This is more useful for the individual of course, although less so for those doing large-scale studies.
+Here, the user can specify the restaurant This is more useful for a restaurant or a potential restaurant owner, although less so for those doing large-scale studies.
 So the user can specify a specific restaurant by id (more on how to get that in the next tab) and then run the exact same functions as in tab 1, just now only for the restaurant corresponding to that id.
 
 Third, the map tab:
@@ -318,7 +315,7 @@ Fourth, the by region/genre:
 Here, we can get visitors info but instead of by restaurant, we get them by the region and/or genre of the restaurant. What this means is we can specify the genre or region, and get visitation info based on that. Ie the user can for example want to know about cocktail bars in tokyo, perhaps for a market study or personal interest, and isolate the data relevant only to that specific subset.Of course, the x-axis here remains the same as it has always been, namely the subset of dates fitting the required constraints set by the user, but the numbers change to reflect the change of the dataset we are analysing.
 
 Fifth, but not least, the prediction:
-The dataset we were given contained only data up to april 22nd inclusive. However, using machine learning prediction algorithms, we were able to predict the visitor data up to may 31st.
+The dataset we were given contained only data up to April 22nd inclusive. However, using our powerful XGB algorithm, we were able to predict the visitor data up to May 31st.
 This tab is that predicted data. Although it cannot be said to be truthful in the barest sense of the word, it is a good prediction of what can be expected. The data in this tab is forecasting future visits. 
 It is presented in a similar way as the first tab, but with reduced capabilities due to the small timeframe of the data in question. Namely:
 The user can pick an id and a date, and we output the predicted number of visitors for that restaurant on that day.
