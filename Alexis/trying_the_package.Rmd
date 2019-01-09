@@ -1,0 +1,17 @@
+---
+title: "trying_the_pkg"
+author: "Alexis Laks"
+date: "12 décembre 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("/Users/laks/Documents/Github/jap_proj/Kaggle_recruit_restau/Kaggle_recruit_restau/RecruitPackage/recruitjap_0.0.0.1000.tar.gz", repos = NULL, type="source")      
+library(recruitjap)
+recruitjap::shinyapp()
+```
+

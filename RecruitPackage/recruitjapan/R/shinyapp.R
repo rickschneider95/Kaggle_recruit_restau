@@ -4,14 +4,17 @@
 #' @export
 #'
 #' @import shiny
+#' @import shinyTime
+#' @import nlme
 #' @examples
-#' shinyapp
+#' dir <- system.file("shiny","template_app1.R", package = "recruitjap")
+#' # shinyapp(dir) don't run or it just won't stop the connexion!
 #'
-shinyapp <- function() {
-  appDir <- system.file("shiny", "template_app1.R", package = "recruitjap")
-  if (appDir == "") {
+shinyapp <- function(){
+  dir <- system.file("shiny","template_app1.R", package = "recruitjap")
+  if (dir == "") {
     stop("Could not find example directory. Try re-installing mypackage.", call. = FALSE)
   }
 
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(dir, display.mode = "normal")
 }
